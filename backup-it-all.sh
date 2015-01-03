@@ -78,8 +78,8 @@ fi
 #вычислим размер папки с архивами ДО архивирования
 StartSize=`du $BackupPath -s -b|cut -d/ -f1`
 #свободное место ДО архивирования
-FreeSize=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
-echo \* FreeSize on $BackupPath is [`printf "%'.0d" $FreeSize`] bytes   >>$LogPrefix/total.log
+FreeSize1=`df $BackupPath --block-size=1048576 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
+echo \* FreeSize of $BackupPath is `printf "%'.0d" $FreeSize1` MB        >>$LogPrefix/total.log
 echo \* TotalSize of $BackupPath is [`printf "%'.0d" $StartSize`] bytes >>$LogPrefix/total.log
 
 echo "############$User##############$Password##############################"    >>$LogPrefix/total.log
@@ -119,14 +119,14 @@ do
            # попробуем вычислить алиас компа
            echo Определим Alias, например >>$LogPrefix/StationParse.$IP
            # начнем с MAC адреса           
-           if [   ! `grep -i $MAC aliases.tbk | wc -l` -eq 0 ]; then
-              Alias=`cat aliases.tbk | grep -i $MAC | cut -d' ' -f2`
+           if     [ `grep -с -i $MAC aliases.tbk ` -ne 0 ]; then
+              Alias=`grep    -i $MAC aliases.tbk | cut -d' ' -f2`
               echo Получили алиас по MAC [$Alias] >>$LogPrefix/StationParse.$IP
-           elif [ ! `cat aliases.tbk | grep -i $IP' ' | wc -l` -eq 0 ]; then
-              Alias=`cat aliases.tbk | grep -i $IP' ' | cut -d' ' -f2`
+           elif   [ `grep -c $IP' ' aliases.tbk ` -ne 0 ]; then
+              Alias=`grep    $IP' ' aliases.tbk| cut -d' ' -f2`
               echo Получили алиас по ИП [$Alias] >>$LogPrefix/StationParse.$IP                                       
-           elif [ ! `cat aliases.tbk | grep -i $NetbiosName' ' | wc -l` -eq 0 ]; then
-              Alias=`cat aliases.tbk | grep -i $NetbiosName' ' | cut -d' ' -f2`
+           elif   [ `grep -c -i -w $NetbiosName' '  aliases.tbk ` -ne 0 ]; then
+              Alias=`grep    -i -w $NetbiosName' '  aliases.tbk | cut -d' ' -f2`
               echo Получили алиас по Netbios [$Alias] >>$LogPrefix/StationParse.$IP           
            fi
         fi
@@ -138,38 +138,41 @@ do
                  `grep -c -i    $MAC         pc-exclude.tbk` -ne 0 || \
                  `grep -c -i -w $NetbiosName pc-exclude.tbk` -ne 0 || \
                  `grep -c -i -w $Alias       pc-exclude.tbk` -ne 0 ]]; then
-              echo ОПА! ip-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] в черном списке! Проходим мимо этого хоста.... >>$LogPrefix/StationParse.$IP                         
+              echo ОПА! IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] в черном списке! Проходим мимо этого хоста.... >>$LogPrefix/StationParse.$IP                         
               Alias=''
-              echo Black listed, exiting >>$LogPrefix/total.log
+              echo Black listed, skiping >>$LogPrefix/total.log
            fi
         fi                      
         # На всякий случай проверим, в белом ли списке станция
         # белый список - только станции из этого списка
         if [ -f pc-include.tbk ]; then
-           if [[ ! `cat pc-include.tbk | grep -i $IP | wc -l` -eq 0  ||\
-                 ! `cat pc-include.tbk | grep -i $MAC | wc -l` -eq 0  ||\
-                 ! `cat pc-include.tbk | grep -i $NetbiosName | wc -l` -eq 0  ||\
-                 ! `cat pc-include.tbk | grep -i $Alias | wc -l` -eq 0 ]]; then
-              echo УРА! $IP $MAC $NetbiosName $Alias в белом списке! >>$LogPrefix/StationParse.$IP
+           if [[ `grep -c       $IP          pc-include.tbk` -ne 0  ||\
+               ! `grep -c -i    $MAC         pc-include.tbk` -ne 0  ||\
+               ! `grep -c -i -w $NetbiosName pc-include.tbk` -ne 0  ||\
+               ! `grep -c -i -w $Alias       pc-include.tbk` -ne 0 ]]; then
+              echo УРА! IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias]  в белом списке! >>$LogPrefix/StationParse.$IP
            else
               Alias=''
-              echo Но как? $IP $MAC $NetbiosName $Alias НЕ в белом списке! проходим мимо этого хоста... >>$LogPrefix/StationParse.$IP
-              echo not in White list, exiting >>$LogPrefix/total.log
+              echo Но как? IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] НЕ в белом списке! проходим мимо этого хоста... >>$LogPrefix/StationParse.$IP
+              echo not in White list, skiping >>$LogPrefix/total.log
            fi                                                                                                                 
         fi        
-        # Алиас задан? значит в белом списке или не в черном!
+        # Алиас задан? значит в белом списке или не в черном! РАБОТАЕМ!
         if [[ -n $Alias ]]; then
            # создадим  папочку, куда будем бэкапить именно этот хост  (если еще нет такой папки)
-              if [ ! -d $BackupPath/$Alias ]; then  mkdir -p $BackupPath/$Alias; fi                      
-              BackupSizeBeforeBackup=`du $BackupPath/$Alias -s -b|cut -d/ -f1`
-              echo -n $BackupPath/$Alias ${sp:0:50-${#BackupPath}-${#Alias}} size before is `printf "%'.0d" $BackupSizeBeforeBackup` bytes " " >>$LogPrefix/total.log
-              # теперь посмотрим, что расшарено на этом хосте 
-              echo Список шар на $IP для $User:   >>$LogPrefix/StationParse.$IP
-              smbclient -L $IP -U $User%$Password >shares.lst 2>&1
-              ## -g special for grep !!!!!
-              cat shares.lst                 >>$LogPrefix/StationParse.$IP
-              # теперь пробежимся по списку шар
-              cat shares.lst| while read shareline
+           if [ ! -d $BackupPath/$Alias ]; then  mkdir -p $BackupPath/$Alias; fi                      
+           #
+           # измерим размер папочки с имеющимся архивом
+           BackupSizeBeforeBackup=`du $BackupPath/$Alias -s -b|cut -d/ -f1`
+           echo -n $BackupPath/$Alias ${sp:0:50-${#BackupPath}-${#Alias}} size before is `printf "%'.0d" $BackupSizeBeforeBackup` bytes " " >>$LogPrefix/total.log
+              
+           # теперь посмотрим, что расшарено на этом хосте 
+           echo Список шар на $IP для $User:   >>$LogPrefix/StationParse.$IP
+           smbclient -L $IP -U $User%$Password >shares.lst 2>&1
+           ## -g special for grep !!!!!
+           cat shares.lst                 >>$LogPrefix/StationParse.$IP
+           # теперь пробежимся по списку шар
+           cat shares.lst| while read shareline
               do
                 if [[ $shareline =~ "Disk" ]]; then
                    if [[ ! $shareline =~ "$" ]]; then
@@ -252,17 +255,19 @@ done
 
 echo '######################################################################################' >>$LogPrefix/total.log
 echo Finished at `date +"%m-%d-%Y %T"` after [`printf "%'.0d" $(( $(date +%s) - $StartTime ))`] seconds of hard working  >>$LogPrefix/total.log
-FreeSize=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
+FreeSize2=`df $BackupPath --block-size=1048576 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
 NewBackupSize=`du $BackupPath -s -b|cut -d/ -f1`
-echo \* Free size on $BackupPath is [`printf "%'.0d" $FreeSize`] bytes now                         >>$LogPrefix/total.log
-echo \* Full size of $BackupPath is [`printf "%'.0d" $NewBackupSize`] bytes and have delta in [`printf "%'.0d" $(( $NewBackupSize - $StartSize ))`] bytes >>$LogPrefix/total.log
-echo That\'s all, folks!                                                                           >>$LogPrefix/total.log
+echo \* Free size of $BackupPath is `printf "%'.0d" $FreeSize2` MB now.  (`printf "%'.0d" $(( $FreeSize1 - $FreeSize2 ))` MB)                           >>$LogPrefix/total.log
+echo \* Full size of $BackupPath is `printf "%'.0d" $NewBackupSize` bytes and have delta in [`printf "%'.0d" $(( $NewBackupSize - $StartSize ))`] bytes >>$LogPrefix/total.log
+echo That\'s all, folks!                                                                                                                                >>$LogPrefix/total.log
 #
+
+
    # заархивируем логи, вдруг пригодится
    mkdir -p ./arclogs/`date +%Y`/`date +%m`
    tar -cvzf ./arclogs/`date +%Y`/`date +%m`/`date +%Y-%m-%d.%H-%M-%S`.tar.gz $LogPrefix >  /dev/null
 
-   # оставим только 10 последних логов
+   # оставим только логи за последние 5 дней
    WatchedDir="./logs"
    DirCnt=`ls -1 $WatchedDir | wc -l`
    MaxDirCnt=5
