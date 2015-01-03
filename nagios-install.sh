@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# http://nagios.sourceforge.net/docs/nagioscore/4/en/quickstart-ubuntu.html
+# 2 http://nagios.sourceforge.net/docs/nagioscore/4/en/quickstart-ubuntu.html
 
 LogFile=~/nagiosInstall.log
 
