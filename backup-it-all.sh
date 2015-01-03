@@ -2,7 +2,7 @@
 
 # TotalBackup.cfg обязательный, в нем настройки
 # 
-# 1aliases.tbk список алиасов рабочих станций
+# aliases.tbk список алиасов рабочих станций
 #
 # exclude.tbk список файлов, не подлежащих копированию
 # include.tbk список файлов, подлежащих копированию
@@ -31,11 +31,13 @@ echo This Total Backup started at `date +"%m-%d-%Y %T"`  >>$LogPrefix/total.log
 StartTime=$(date +%s)
 
 if [ -f TotalBackup.cfg ]; then
-   MountPath=`cat TotalBackup.cfg | grep -i MountPath= | cut -d'=' -f2`
-   BackupPath=`cat TotalBackup.cfg | grep -i BackupPath= | cut -d'=' -f2`
-   Network=`cat TotalBackup.cfg | grep -i Network= | cut -d'=' -f2`
-   User=`cat TotalBackup.cfg | grep -i User= | cut -d'=' -f2`
-   Password=`cat TotalBackup.cfg | grep -i Password= | cut -d'=' -f2`
+   MountPath= `grep -i MountPath=  TotalBackup.cfg | cut -d'=' -f2`
+   BackupPath=`grep -i BackupPath= TotalBackup.cfg | cut -d'=' -f2`
+   Network=   `grep -i Network=    TotalBackup.cfg | cut -d'=' -f2`
+   User=      `grep -i User=       TotalBackup.cfg | cut -d'=' -f2`
+   Password=  `grep -i Password=   TotalBackup.cfg | cut -d'=' -f2`
+   #
+   
 fi
 
 if [ -z "$MountPath" ]; then
@@ -132,10 +134,10 @@ do
         # Проверим, не в черном ли списке станция
         # черный список - все станции, кроме этих
         if [ -f pc-exclude.tbk ]; then
-           if [[ `grep -c       $IP           pc-exclude.tbk` -ne 0 || \
-                 `grep -c -i    $MAC          pc-exclude.tbk` -ne 0 || \
-                 `grep -c -i -w $NetbiosName  pc-exclude.tbk` -ne 0 || \
-                 `grep -c -i -w $Alias        pc-exclude.tbk` -ne 0 ]]; then
+           if [[ `grep -c       $IP          pc-exclude.tbk` -ne 0 || \
+                 `grep -c -i    $MAC         pc-exclude.tbk` -ne 0 || \
+                 `grep -c -i -w $NetbiosName pc-exclude.tbk` -ne 0 || \
+                 `grep -c -i -w $Alias       pc-exclude.tbk` -ne 0 ]]; then
               echo ОПА! ip-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] в черном списке! Проходим мимо этого хоста.... >>$LogPrefix/StationParse.$IP                         
               Alias=''
               echo Black listed, exiting >>$LogPrefix/total.log
