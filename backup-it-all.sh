@@ -101,11 +101,11 @@ do
      cat station                                 >>$LogPrefix/StationParse.$IP
      echo Ну, теперь все ясно с этим хостом      >>$LogPrefix/StationParse.$IP
      cat station | grep '<00>'  |grep -v '<GROUP>'  >>$LogPrefix/StationParse.$IP
-     NetbiosName=`cat station | grep '<20>' | grep -v '<GROUP>' |cut -d" " -f1 | sed 's/.*/\L&/' |sed 's/^[ \t]*//'`
+     NetbiosName=`grep '<20>' station | grep -v '<GROUP>' |cut -d" " -f1 | sed 's/.*/\L&/' |sed 's/^[ \t]*//'`
      Alias=$NetbiosName
      echo Получается, Netbios имя хоста [$NetbiosName]>>$LogPrefix/StationParse.$IP
-     cat station | grep MAC                      >>$LogPrefix/StationParse.$IP
-     MAC=`cat station | grep 'MAC' | cut -d" " -f4 | sed 's/-/:/g'`
+     grep MAC station                     >>$LogPrefix/StationParse.$IP
+     MAC=`grep 'MAC' station | cut -d" " -f4 | sed 's/-/:/g'`
      echo Получается, MAC-адрес хоста [$MAC]     >>$LogPrefix/StationParse.$IP          
      rm station
      echo -n Start `date +"%m-%d-%Y %T"` ' ' $IP${sp:0:14-${#IP}} ' '  $MAC ' ' $NetbiosName${sp:0:17-${#NetbiosName}} ' ' >>$LogPrefix/total.log
@@ -119,7 +119,7 @@ do
            # попробуем вычислить алиас компа
            echo Определим Alias, например >>$LogPrefix/StationParse.$IP
            # начнем с MAC адреса           
-           if [   ! `cat aliases.tbk | grep -i $MAC | wc -l` -eq 0 ]; then
+           if [   ! `grep -i $MAC aliases.tbk | wc -l` -eq 0 ]; then
               Alias=`cat aliases.tbk | grep -i $MAC | cut -d' ' -f2`
               echo Получили алиас по MAC [$Alias] >>$LogPrefix/StationParse.$IP
            elif [ ! `cat aliases.tbk | grep -i $IP' ' | wc -l` -eq 0 ]; then
