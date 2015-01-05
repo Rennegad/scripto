@@ -33,13 +33,12 @@ echo This Total Backup started at `date +"%m-%d-%Y %T"`  >>$log
 StartTime=$(date +%s)
 
 if [ -f TotalBackup.cfg ]; then
-   MountPath= `grep -i MountPath=  TotalBackup.cfg | cut -d'=' -f2`
+   MountPath=`grep -i MountPath=  TotalBackup.cfg | cut -d'=' -f2`
    BackupPath=`grep -i BackupPath= TotalBackup.cfg | cut -d'=' -f2`
-   Network=   `grep -i Network=    TotalBackup.cfg | cut -d'=' -f2`
-   User=      `grep -i User=       TotalBackup.cfg | cut -d'=' -f2`
-   Password=  `grep -i Password=   TotalBackup.cfg | cut -d'=' -f2`
+   Network=`grep -i Network=    TotalBackup.cfg | cut -d'=' -f2`
+   User=`grep -i User=       TotalBackup.cfg | cut -d'=' -f2`
+   Password=`grep -i Password=   TotalBackup.cfg | cut -d'=' -f2`
    #
-   
 fi
 
 if [ -z "$MountPath" ]; then
@@ -231,7 +230,9 @@ do
                     rsync $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current >>$LogPrefix/StationRSync.$IP 2>&1
                     Code=$?
                     if [ $Code -ne 0 ]; then echo `date` Ошибка Rsync code is $Code!  >>$LogPrefix/StationBadRSync.$IP ; fi
-                    rm include
+                    #
+                    if [ -f include ];then  rm include; fi
+                    #
                     echo `date` выполнили rsync для $Alias >>$log
                     BackupSizeAfterBackup=`du $BackupPath/$Alias -s -b|cut -d/ -f1`
                     echo Size after rsync is `printf "%'.0d" $BackupSizeAfterBackup`, change `printf "%'.0d" $(($BackupSizeAfterBackup  - $BackupSizeBeforeBackup ))`. ALL DONE. >>$log
@@ -258,8 +259,14 @@ done
 echo '######################################################################################' >>$log
 echo Finished at `date +"%m-%d-%Y %T"` after [`printf "%'.0d" $(( $(date +%s) - $StartTime ))`] seconds of hard working  >>$log
 FreeSize2=`df $BackupPath --block-size=1048576 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
+FreeSize3=$(( $FreeSize1 - $FreeSize2 ))
 NewBackupSize=`du $BackupPath -s -b|cut -d/ -f1`
-echo \* Free size of $BackupPath is `printf "%'.0d" $FreeSize2` MB now.  (`printf "%'.0d" $(( $FreeSize1 - $FreeSize2 ))` MB)                           >>$log
+echo -n \* Freesize of $BackupPath is `printf "%'.0d" $FreeSize2` MB   >>$log
+if [ $FreeSize3 -ne 0 ]; then
+   echo , less by `printf "%'.0d" $FreeSize3` Mb                       >>$log
+else
+   echo , no change...                                                 >>$log
+fi   
 echo \* Full size of $BackupPath is `printf "%'.0d" $NewBackupSize` bytes and have delta in [`printf "%'.0d" $(( $NewBackupSize - $StartSize ))`] bytes >>$log
 echo That\'s all, folks!                                                                                                                                >>$log
 #
