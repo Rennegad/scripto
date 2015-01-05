@@ -18,7 +18,7 @@ cd `dirname $0`
 # включим логирование всего
 LogPrefix="./logs/"`date +%Y-%m-%d.%H-%M-%S`
 mkdir -p $LogPrefix
-log=$log
+log=$LogPrefix/total.log
 mail=$LogPrefix/mail.txt
 ###############################################
  
