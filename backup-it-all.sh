@@ -31,11 +31,11 @@ echo This Total Backup started at `date +"%m-%d-%Y %T"`  >>$LogPrefix/total.log
 StartTime=$(date +%s)
 
 if [ -f TotalBackup.cfg ]; then
-   MountPath= `grep -i MountPath=  TotalBackup.cfg | cut -d'=' -f2`
+   MountPath=`grep -i MountPath=  TotalBackup.cfg | cut -d'=' -f2`
    BackupPath=`grep -i BackupPath= TotalBackup.cfg | cut -d'=' -f2`
-   Network=   `grep -i Network=    TotalBackup.cfg | cut -d'=' -f2`
-   User=      `grep -i User=       TotalBackup.cfg | cut -d'=' -f2`
-   Password=  `grep -i Password=   TotalBackup.cfg | cut -d'=' -f2`
+   Network=`grep -i Network=    TotalBackup.cfg | cut -d'=' -f2`
+   User=`grep -i User=       TotalBackup.cfg | cut -d'=' -f2`
+   Password=`grep -i Password=   TotalBackup.cfg | cut -d'=' -f2`
    #
    
 fi
