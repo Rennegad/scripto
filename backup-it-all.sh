@@ -10,7 +10,7 @@
 #
 # pc-exclude.tbk список хостов, с которых НЕ идет копирование (MAC, IP, Netbios, Alias)
 # pc-include.tbk список хостов, с которых идет копирование (MAC, IP, Netbios, Alias)
-#
+# check push-cronpull
 
 cd `dirname $0`
 
