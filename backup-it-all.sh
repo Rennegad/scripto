@@ -120,13 +120,13 @@ do
            # попробуем вычислить алиас компа
            echo Определим Alias, например >>$LogPrefix/StationParse.$IP
            # начнем с MAC адреса           
-           if     [ `grep -с -i $MAC aliases.tbk ` -ne 0 ]; then
+           if     [[ `grep -c -i $MAC aliases.tbk ` -ne 0 ]]; then
               Alias=`grep    -i $MAC aliases.tbk | cut -d' ' -f2`
               echo Получили алиас по MAC [$Alias] >>$LogPrefix/StationParse.$IP
-           elif   [ `grep -c $IP' ' aliases.tbk ` -ne 0 ]; then
+           elif   [[ `grep -c $IP' ' aliases.tbk ` -ne 0 ]]; then
               Alias=`grep    $IP' ' aliases.tbk| cut -d' ' -f2`
               echo Получили алиас по ИП [$Alias] >>$LogPrefix/StationParse.$IP                                       
-           elif   [ `grep -c -i -w $NetbiosName' '  aliases.tbk ` -ne 0 ]; then
+           elif   [[ `grep -c -i -w $NetbiosName' '  aliases.tbk ` -ne 0 ]]; then
               Alias=`grep    -i -w $NetbiosName' '  aliases.tbk | cut -d' ' -f2`
               echo Получили алиас по Netbios [$Alias] >>$LogPrefix/StationParse.$IP           
            fi
