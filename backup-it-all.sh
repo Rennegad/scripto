@@ -217,10 +217,10 @@ do
                         perl -pe 's/([a-z])/[\U$1\E$1]/g' include.$Alias >include
                         #
                         SyncOptions=$SyncOptions" --include-from include "
-                    elif [ -f include.tbk ]; then                       
+                    elif [ -f include.tbk ]; then
                         perl -pe 's/([a-z])/[\U$1\E$1]/g' include.tbk >include
-                        SyncOptions=$SyncOptions" --include-from include"                        
-                    fi               
+                        SyncOptions=$SyncOptions" --include-from include "
+                    fi
                     
                     ########## http://wiki.dieg.info/rsync
                     ########## http://www.sanfoundry.com/rsync-command-usage-examples-in-linux/
