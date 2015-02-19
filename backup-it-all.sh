@@ -227,6 +227,7 @@ do
                     
                     echo Поехали! RSYNC $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current >$LogPrefix/StationRSync.$IP
                     echo `date` выполним rsync для $Alias >>$log
+                    cat include >>$LogPrefix/StationRSync.$IP
                     rsync $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current >>$LogPrefix/StationRSync.$IP 2>&1
                     Code=$?
                     if [ $Code -ne 0 ]; then echo `date` Ошибка Rsync code is $Code!  >>$LogPrefix/StationBadRSync.$IP ; fi
