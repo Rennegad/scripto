@@ -185,13 +185,14 @@ do
                       if [ ! -d "$MountPath/$Alias/$Share_Name" ];  then mkdir -p "$MountPath/$Alias/$Share_Name" ; fi
     
                       # ну чо, теперь смонтируем эту шару. то есть хотя бы попробуем
+                      echo :::::::::::::                                                                                          >>$LogPrefix/StationParse.$IP
                       echo Пробуем монтировать $User:$Password //$IP/$ShareName $MountPath/$Alias/$Share_Name                     >>$LogPrefix/StationParse.$IP
                       mount "//$IP/$ShareName" "$MountPath/$Alias/$Share_Name" -o user=$User,password=$Password,iocharset=utf8,ro >>$LogPrefix/StationParse.$IP 2>&1
                       Code=$?                      
                       if [ $Code -eq 0 ];  then                 
                          echo //$IP/$ShareName смонтирован в $MountPath/$Alias/$Share_Name! >>$LogPrefix/StationParse.$IP
                       else 
-                         echo Мониторование //$IP/$ShareName в $MountPath/$Alias неудачно, код $Code >>$LogPrefix/StationParse.$IP     
+                         echo [!!==ERROR==!!] Мониторование //$IP/$ShareName в $MountPath/$Alias неудачно, код $Code >>$LogPrefix/StationParse.$IP     
                          ## надо удалить папочку тогда, зачем она пустая ?                         
                          rm -r $MountPath/$Alias/$Share_Name
                       fi        
