@@ -147,11 +147,15 @@ do
         # На всякий случай проверим, в белом ли списке станция
         # белый список - только станции из этого списка
         if [ -f pc-include.tbk ]; then
-           if [[ `grep -c       $IP          pc-include.tbk` -ne 0  ||\
-               ! `grep -c -i    $MAC         pc-include.tbk` -ne 0  ||\
-               ! `grep -c -i -w $NetbiosName pc-include.tbk` -ne 0  ||\
-               ! `grep -c -i -w $Alias       pc-include.tbk` -ne 0 ]]; then
-              echo УРА! IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias]  в белом списке! >>$LogPrefix/StationParse.$IP
+           if [[ `grep -c       $IP          pc-include.tbk` -ne 0 ||\
+                 `grep -c -i    $MAC         pc-include.tbk` -ne 0 ||\
+                 `grep -c -i -w $NetbiosName pc-include.tbk` -ne 0 ||\
+                 `grep -c -i -w $Alias       pc-include.tbk` -ne 0 ]]; then
+                 
+              echo УРА! IP-[$IP-`grep -c       $IP          pc-include.tbk`] \
+                        MAC-[$MAC-`grep -c -i    $MAC         pc-include.tbk`] \
+                        Netbios-[$NetbiosName-`grep -c -i -w $NetbiosName pc-include.tbk`] \
+                        Alias-[$Alias-`grep -c -i -w $Alias       pc-include.tbk`] в белом списке! Это удача, работаем с этим хостом!>>$LogPrefix/StationParse.$IP
            else
               Alias=''
               echo Но как? IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] НЕ в белом списке! проходим мимо этого хоста... >>$LogPrefix/StationParse.$IP
@@ -169,7 +173,9 @@ do
               
            # теперь посмотрим, что расшарено на этом хосте 
            echo Список шар на $IP для $User:   >>$LogPrefix/StationParse.$IP
+           echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
            smbclient -L $IP -U $User%$Password >shares.lst 2>&1
+           echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
            ## -g special for grep !!!!!
            cat shares.lst                 >>$LogPrefix/StationParse.$IP
            # теперь пробежимся по списку шар
@@ -194,6 +200,8 @@ do
                       else 
                          echo [!!==ERROR==!!] Мониторование //$IP/$ShareName в $MountPath/$Alias неудачно, код $Code >>$LogPrefix/StationParse.$IP     
                          ## надо удалить папочку тогда, зачем она пустая ?                         
+                         MountSize=`du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1`
+                         echo Надо размонтировать $MountPath/$Alias/$Share_Name, его размер [$MountSize] >>$LogPrefix/StationParse.$IP     
                          rm -r $MountPath/$Alias/$Share_Name
                       fi        
                    fi
@@ -244,7 +252,8 @@ do
                     # и теперь не забыть все размонтировать!
                     mount | grep -i $MountPath | cut -d' ' -f3 | while read mountline
                     do
-                      umount $mountline
+                      echo размонтируем теперича $mountline  >>$LogPrefix/StationParse.$IP 2>&1
+                      umount $mountline                      >>$LogPrefix/StationParse.$IP 2>&1
                       #echo $mountline
                     done                            
                     echo `date` На работу с $Alias ушло $(( $(date +%s) - $pcStartTime )) сек.   >>$LogPrefix/StationParse.$IP
