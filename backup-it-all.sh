@@ -177,22 +177,23 @@ do
               do
                 if [[ $shareline =~ "Disk" ]]; then
                    if [[ ! $shareline =~ "$" ]]; then
-                      ShareName=`echo $shareline | sed 's/Disk//g' | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/ /_/g'`
+                      ShareName=`echo $shareline | sed 's/Disk//g' | sed 's/^[ \t]*//;s/[ \t]*$//'`
+                      Share_Name=`echo $shareline | sed 's/Disk//g' | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/ /_/g'`
                       #echo внимание
                       #echo создаем папку $MountPath/$NetbiosName/$ShareName
                       # создадим папочку, куда будем монтировать для каждой шары (если еще нет такой папки)
-                      if [ ! -d "$MountPath/$Alias/$ShareName" ];  then mkdir -p "$MountPath/$Alias/$ShareName" ; fi                     
+                      if [ ! -d "$MountPath/$Alias/$Share_Name" ];  then mkdir -p "$MountPath/$Alias/$Share_Name" ; fi
     
                       # ну чо, теперь смонтируем эту шару. то есть хотя бы попробуем
-                      echo Пробуем монтировать $User:$Password //$IP/$ShareName $MountPath/$Alias/$ShareName                     >>$LogPrefix/StationParse.$IP
-                      mount "//$IP/$ShareName" "$MountPath/$Alias/$ShareName" -o user=$User,password=$Password,iocharset=utf8,ro >>$LogPrefix/StationParse.$IP 2>&1
+                      echo Пробуем монтировать $User:$Password //$IP/$ShareName $MountPath/$Alias/$Share_Name                     >>$LogPrefix/StationParse.$IP
+                      mount "//$IP/$ShareName" "$MountPath/$Alias/$Share_Name" -o user=$User,password=$Password,iocharset=utf8,ro >>$LogPrefix/StationParse.$IP 2>&1
                       Code=$?                      
                       if [ $Code -eq 0 ];  then                 
-                         echo //$IP/$ShareName смонтирован в $MountPath/$Alias/$ShareName! >>$LogPrefix/StationParse.$IP
+                         echo //$IP/$ShareName смонтирован в $MountPath/$Alias/$Share_Name! >>$LogPrefix/StationParse.$IP
                       else 
                          echo Мониторование //$IP/$ShareName в $MountPath/$Alias неудачно, код $Code >>$LogPrefix/StationParse.$IP     
                          ## надо удалить папочку тогда, зачем она пустая ?                         
-                         rm -r $MountPath/$Alias/$ShareName
+                         rm -r $MountPath/$Alias/$Share_Name
                       fi        
                    fi
                 fi
