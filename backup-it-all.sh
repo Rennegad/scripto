@@ -201,7 +201,10 @@ do
                          echo [!!==ERROR==!!] Мониторование //$IP/$ShareName в $MountPath/$Alias неудачно, код $Code >>$LogPrefix/StationParse.$IP     
                          ## надо удалить папочку тогда, зачем она пустая ?                         
                          MountSize=`du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1`
-                         echo Надо размонтировать $MountPath/$Alias/$Share_Name, его размер [$MountSize] >>$LogPrefix/StationParse.$IP     
+                         if [[ $MountSize -gt 0 ]]; then
+                            echo Это странно, но адо размонтировать $MountPath/$Alias/$Share_Name, его размер [$MountSize] >>$LogPrefix/StationParse.$IP
+                            umount $MountPath/$Alias/$Share_Name
+                         fi
                          rm -r $MountPath/$Alias/$Share_Name
                       fi        
                    fi
@@ -210,11 +213,10 @@ do
               rm shares.lst
               # если было хотя бы одно успешное монтирование - БЭКАААААП!!
               if [ -d $MountPath/$Alias ]; then
-                 #echo `date` Измерим AliasSize для $Alias
                  AliasSize=`du $MountPath/$Alias -s -b|cut -d/ -f1`              
-                 #echo `date` AliasSize для $Alias равен `printf "%'.0d" $AliasSize`                                  
                  if [[ $AliasSize -gt 0 ]]; then
-                    echo `date`. Итого размер всех шар для $Alias составляет [$AliasSizeStr] б. Работаем...  >>$LogPrefix/StationParse.$IP
+                    echo .     >>$LogPrefix/StationParse.$IP
+                    echo `date`. Итого доступный размер всех шар для $Alias составляет [`printf "%'.0d" $AliasSize` MB] б. Работаем с этим объемом...  >>$LogPrefix/StationParse.$IP
                     #    поехалиииииииии            
                     ArchiveRoot=$BackupPath/$Alias
                     IncrementDir=`date +%Y-%m-%d`
@@ -252,9 +254,8 @@ do
                     # и теперь не забыть все размонтировать!
                     mount | grep -i $MountPath | cut -d' ' -f3 | while read mountline
                     do
-                      echo размонтируем теперича $mountline  >>$LogPrefix/StationParse.$IP 2>&1
-                      umount $mountline                      >>$LogPrefix/StationParse.$IP 2>&1
-                      #echo $mountline
+                      echo размонтируем теперича [$mountline] >>$LogPrefix/StationParse.$IP 2>&1
+                      umount $mountline                       >>$LogPrefix/StationParse.$IP 2>&1
                     done                            
                     echo `date` На работу с $Alias ушло $(( $(date +%s) - $pcStartTime )) сек.   >>$LogPrefix/StationParse.$IP
                  else
