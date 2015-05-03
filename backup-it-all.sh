@@ -179,12 +179,15 @@ do
            cat shares.lst                                                   >>$LogPrefix/StationParse.$IP
            echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
            # теперь пробежимся по полученному списку дисковых шар
-           cat shares.lst| while read shareline
+           cat shares-grep.lst| while read shareline
               do
-                if [[ $shareline =~ "Disk" ]]; then
-                   if [[ ! $shareline =~ "$" ]]; then
-                      ShareName=`echo $shareline | sed 's/Disk//g' | sed 's/^[ \t]*//;s/[ \t]*$//'`
-                      Share_Name=`echo $shareline | sed 's/Disk//g' | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/ /_/g'`
+                #if [[ $shareline =~ "Disk" ]]; then
+                #   if [[ ! $shareline =~ "$" ]]; then                
+                      #ShareName=`echo $shareline | sed 's/Disk//g' | sed 's/^[ \t]*//;s/[ \t]*$//'`
+                      #Share_Name=`echo $shareline | sed 's/Disk//g' | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/ /_/g'`
+
+                      ShareName=`echo $shareline | cut --delimiter="|" -f2`
+                      Share_Name=`echo $ShareName | sed 's/ /_/g'`
                       #echo внимание
                       #echo создаем папку $MountPath/$NetbiosName/$ShareName
                       # создадим папочку, куда будем монтировать для каждой шары (если еще нет такой папки)
@@ -208,8 +211,8 @@ do
                             rm -r $MountPath/$Alias/$Share_Name 
                          fi
                       fi        
-                   fi
-                fi
+                   #fi
+                #fi
               done            
               rm shares.lst
               # если было хотя бы одно успешное монтирование - БЭКАААААП!!
