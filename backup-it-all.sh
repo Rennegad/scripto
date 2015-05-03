@@ -150,12 +150,11 @@ do
            if [[ `grep -c       $IP          pc-include.tbk` -ne 0 ||\
                  `grep -c -i    $MAC         pc-include.tbk` -ne 0 ||\
                  `grep -c -i -w $NetbiosName pc-include.tbk` -ne 0 ||\
-                 `grep -c -i -w $Alias       pc-include.tbk` -ne 0 ]]; then
-                 
-              echo УРА! IP-[$IP-`grep -c       $IP          pc-include.tbk`] \
-                        MAC-[$MAC-`grep -c -i    $MAC         pc-include.tbk`] \
-                        Netbios-[$NetbiosName-`grep -c -i -w $NetbiosName pc-include.tbk`] \
-                        Alias-[$Alias-`grep -c -i -w $Alias       pc-include.tbk`] в белом списке! Это удача, работаем с этим хостом!>>$LogPrefix/StationParse.$IP
+                 `grep -c -i -w $Alias       pc-include.tbk` -ne 0 ]]; then                 
+              echo УРА! IP-[$IP `grep -c $IP pc-include.tbk`] \
+                        MAC-[$MAC `grep -c -i $MAC pc-include.tbk`] \
+                        Netbios-[$NetbiosName `grep -c -i -w $NetbiosName pc-include.tbk`] \
+                        Alias-[$Alias `grep -c -i -w $Alias pc-include.tbk`] в белом списке! Это удача, работаем с этим хостом!>>$LogPrefix/StationParse.$IP
            else
               Alias=''
               echo Но как? IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] НЕ в белом списке! проходим мимо этого хоста... >>$LogPrefix/StationParse.$IP
@@ -172,47 +171,36 @@ do
            echo -n $BackupPath/$Alias ${sp:0:50-${#BackupPath}-${#Alias}} size before is `printf "%'.0d" $BackupSizeBeforeBackup` bytes " " >>$log
               
            # теперь посмотрим, что расшарено на этом хосте 
-           echo Список шар на $IP для $User:   >>$LogPrefix/StationParse.$IP
-           smbclient -L $IP -U $User%$Password    | grep Disk | grep -v '$|'> shares.lst 2>&1
-           smbclient -L $IP -U $User%$Password -g | grep Disk | grep -v '$|'> shares-grep.lst 2>&1
+           echo Список открытых шар на $IP для $User:                       >>$LogPrefix/StationParse.$IP
+           smbclient -L $IP -U $User%$Password -g | grep Disk | grep -v '$|'> shares.lst 2>&1
            echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
            cat shares.lst                                                   >>$LogPrefix/StationParse.$IP
            echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
            # теперь пробежимся по полученному списку дисковых шар
-           cat shares-grep.lst| while read shareline
+           cat shares.lst| while read shareline
               do
-                #if [[ $shareline =~ "Disk" ]]; then
-                #   if [[ ! $shareline =~ "$" ]]; then                
-                      #ShareName=`echo $shareline | sed 's/Disk//g' | sed 's/^[ \t]*//;s/[ \t]*$//'`
-                      #Share_Name=`echo $shareline | sed 's/Disk//g' | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/ /_/g'`
-
-                      ShareName=`echo $shareline | cut --delimiter="|" -f2`
-                      Share_Name=`echo $ShareName | sed 's/ /_/g'`
-                      #echo внимание
-                      #echo создаем папку $MountPath/$NetbiosName/$ShareName
-                      # создадим папочку, куда будем монтировать для каждой шары (если еще нет такой папки)
-                      if [ ! -d "$MountPath/$Alias/$Share_Name" ];  then mkdir -p "$MountPath/$Alias/$Share_Name" ; fi
-    
-                      # ну чо, теперь смонтируем эту шару. то есть хотя бы попробуем
-                      echo :::::::::::::                                                                                          >>$LogPrefix/StationParse.$IP
-                      echo Пробуем монтировать $User:$Password //$IP/$ShareName $MountPath/$Alias/$Share_Name                     >>$LogPrefix/StationParse.$IP
-                      mount "//$IP/$ShareName" "$MountPath/$Alias/$Share_Name" -o user=$User,password=$Password,iocharset=utf8,ro >>$LogPrefix/StationParse.$IP 2>&1
-                      Code=$?                      
-                      if [ $Code -eq 0 ];  then                 
-                         echo //$IP/$ShareName смонтирован в $MountPath/$Alias/$Share_Name! >>$LogPrefix/StationParse.$IP
-                      else 
-                         echo [!!==ERROR==!!] Мониторование //$IP/$ShareName в $MountPath/$Alias неудачно, код $Code >>$LogPrefix/StationParse.$IP     
-                         ## надо удалить папочку тогда, зачем она пустая ?                         
-                         MountSize=`du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1`
-                         if [[ $MountSize -gt 0 ]]; then
-                            echo Это странно, $MountPath/$Alias/$Share_Name все-таки смонтирован, его размер [$MountSize] >>$LogPrefix/StationParse.$IP
-                            # umount $MountPath/$Alias/$Share_Name
-                         else
-                            rm -r $MountPath/$Alias/$Share_Name 
-                         fi
-                      fi        
-                   #fi
-                #fi
+                ShareName=`echo $shareline | cut --delimiter="|" -f2`
+                Share_Name=`echo $ShareName | sed 's/ /_/g'`
+                # echo создаем папку $MountPath/$NetbiosName/$ShareName
+                # создадим папочку, куда будем монтировать для каждой шары (если еще нет такой папки)
+                if [ ! -d "$MountPath/$Alias/$Share_Name" ];  then mkdir -p "$MountPath/$Alias/$Share_Name" ; fi
+                # ну чо, теперь смонтируем эту шару. то есть хотя бы попробуем
+                echo ......                                                                                                 >>$LogPrefix/StationParse.$IP
+                echo Пробуем монтировать $User:$Password //$IP/$ShareName $MountPath/$Alias/$Share_Name                     >>$LogPrefix/StationParse.$IP
+                mount "//$IP/$ShareName" "$MountPath/$Alias/$Share_Name" -o user=$User,password=$Password,iocharset=utf8,ro >>$LogPrefix/StationParse.$IP 2>&1
+                Code=$?
+                MountSize=`du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1`
+                if [ $Code -eq 0 ];  then                 
+                   echo //$IP/$ShareName смонтирован в $MountPath/$Alias/$Share_Name, его размер [$MountSize]! >>$LogPrefix/StationParse.$IP
+                else 
+                   echo [!!==ERROR==!!] Мониторование //$IP/$ShareName в $MountPath/$Alias неудачно, код $Code >>$LogPrefix/StationParse.$IP     
+                   ## надо удалить папочку тогда, зачем она пустая ?                         
+                   if [[ $MountSize -gt 0 ]]; then
+                      echo Это странно, $MountPath/$Alias/$Share_Name все-таки смонтирован, его размер [$MountSize] >>$LogPrefix/StationParse.$IP
+                   else
+                      rm -r $MountPath/$Alias/$Share_Name 
+                   fi
+                fi        
               done            
               rm shares.lst
               # если было хотя бы одно успешное монтирование - БЭКАААААП!!
@@ -260,8 +248,8 @@ do
                     do
                       mountline=$MountPath${mountline##*$MountPath}
                       mountline=`echo $mountline | cut -d' ' -f1`
-                      echo размонтируем теперича [$mountline] >>$LogPrefix/StationParse.$IP 2>&1
-                      umount $mountline                       >>$LogPrefix/StationParse.$IP 2>&1
+                      echo Размонтируем [$mountline] >>$LogPrefix/StationParse.$IP 2>&1
+                      umount $mountline              >>$LogPrefix/StationParse.$IP 2>&1
                     done                            
                     echo `date` На работу с $Alias ушло $(( $(date +%s) - $pcStartTime )) сек.   >>$LogPrefix/StationParse.$IP
                  else
