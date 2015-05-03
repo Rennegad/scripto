@@ -173,12 +173,12 @@ do
               
            # теперь посмотрим, что расшарено на этом хосте 
            echo Список шар на $IP для $User:   >>$LogPrefix/StationParse.$IP
+           smbclient -L $IP -U $User%$Password    | grep Disk | grep -v '$|'> shares.lst 2>&1
+           smbclient -L $IP -U $User%$Password -g | grep Disk | grep -v '$|'> shares-grep.lst 2>&1
            echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
-           smbclient -L $IP -U $User%$Password >shares.lst 2>&1
+           cat shares.lst                                                   >>$LogPrefix/StationParse.$IP
            echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
-           ## -g special for grep !!!!!
-           cat shares.lst                 >>$LogPrefix/StationParse.$IP
-           # теперь пробежимся по списку шар
+           # теперь пробежимся по полученному списку дисковых шар
            cat shares.lst| while read shareline
               do
                 if [[ $shareline =~ "Disk" ]]; then
@@ -202,10 +202,11 @@ do
                          ## надо удалить папочку тогда, зачем она пустая ?                         
                          MountSize=`du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1`
                          if [[ $MountSize -gt 0 ]]; then
-                            echo Это странно, но адо размонтировать $MountPath/$Alias/$Share_Name, его размер [$MountSize] >>$LogPrefix/StationParse.$IP
-                            umount $MountPath/$Alias/$Share_Name
+                            echo Это странно, $MountPath/$Alias/$Share_Name все-таки смонтирован, его размер [$MountSize] >>$LogPrefix/StationParse.$IP
+                            # umount $MountPath/$Alias/$Share_Name
+                         else
+                            rm -r $MountPath/$Alias/$Share_Name 
                          fi
-                         rm -r $MountPath/$Alias/$Share_Name
                       fi        
                    fi
                 fi
@@ -220,7 +221,7 @@ do
                     #    поехалиииииииии            
                     ArchiveRoot=$BackupPath/$Alias
                     IncrementDir=`date +%Y-%m-%d`
-                    SyncOptions="-avzr -d --force --ignore-errors --delete --delete-excluded --backup --backup-dir=$ArchiveRoot/$IncrementDir -h --log-file=$LogPrefix/rsync-$Alias.log"
+                    SyncOptions="-avr -d --force --ignore-errors --delete --delete-excluded --backup --backup-dir=$ArchiveRoot/$IncrementDir -h --log-file=$LogPrefix/rsync-$Alias.log"
                     Current=files
                     
                     ## проверим, есть ли условия фильтрации
@@ -252,8 +253,10 @@ do
                     ##########
                     #           
                     # и теперь не забыть все размонтировать!
-                    mount | grep -i $MountPath | cut -d' ' -f3 | while read mountline
+                    mount | grep -i $MountPath | while read mountline
                     do
+                      mountline=$MountPath${mountline##*$MountPath}
+                      mountline=`echo $mountline | cut -d' ' -f1`
                       echo размонтируем теперича [$mountline] >>$LogPrefix/StationParse.$IP 2>&1
                       umount $mountline                       >>$LogPrefix/StationParse.$IP 2>&1
                     done                            
