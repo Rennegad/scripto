@@ -6,7 +6,7 @@
 #
 # exclude.tbk список файлов, не подлежащих копированию
 # include.tbk список файлов, подлежащих копированию
-# include.$alias список файлов, подлежащих копированию для хоста $alias
+# include.$alias список файлов, подлежащих копированию для хоста $alias (пробелы заменяются на _ )
 #
 # pc-exclude.tbk список хостов, с которых НЕ идет копирование (MAC, IP, Netbios, Alias)
 # pc-include.tbk список хостов, с которых идет копирование (MAC, IP, Netbios, Alias)
@@ -19,26 +19,42 @@ cd `dirname $0`
 LogPrefix="./logs/"`date +%Y-%m-%d.%H-%M-%S`
 mkdir -p $LogPrefix
 log=$LogPrefix/total.log
-mail=$LogPrefix/mail.txt
+BadLog=bad.log
+if [ -f $BadLog ]; then rm $BadLog; fi
+mailMe=$LogPrefix/mail.txt
+if [ -f $mailMe ]; then rm $mailMe; fi
 ###############################################
+FreeSpaceLimit=100000000
+BackupArchiveLimit=30
+##########
  
-# зададим пробелы для выравнивания 
-sp='____________________________'
-
+# зададим пробелы для выравнивания и ширину колонок в таблице
+Spac='                                                                       '
+Line='-----------------------------------------------------------------------'
+Width1=-35
+Width2=-6
+Width3=-18
+Width4=-18
+Width5=-10
+Width6=-16
+Width7=-16
+Width8=-15
+Width9=-18
+############################################################################################################################
 
 #############################################################################################################################
 # итак, поехали
-echo This Total Backup started at `date +"%m-%d-%Y %T"`  >>$log
+#echo This Total Backup started at `date +"%m-%d-%Y %T"`  >>$log
 # начало архивирования
 StartTime=$(date +%s)
+StartTimeF=$(date +"%d-%m-%y %T")
 
 if [ -f TotalBackup.cfg ]; then
-   MountPath=`grep -i MountPath=  TotalBackup.cfg | cut -d'=' -f2`
-   BackupPath=`grep -i BackupPath= TotalBackup.cfg | cut -d'=' -f2`
-   Network=`grep -i Network=    TotalBackup.cfg | cut -d'=' -f2`
-   User=`grep -i User=       TotalBackup.cfg | cut -d'=' -f2`
-   Password=`grep -i Password=   TotalBackup.cfg | cut -d'=' -f2`
-   #
+   MountPath=$(grep  -i -w ^MountPath  TotalBackup.cfg | cut -d'=' -f2)
+   BackupPath=$(grep -i -w ^BackupPath TotalBackup.cfg | cut -d'=' -f2)
+   Network=$(grep    -i -w ^Network    TotalBackup.cfg | cut -d'=' -f2)
+   User=$(grep       -i -w ^User       TotalBackup.cfg | cut -d'=' -f2)
+   Password=$(grep   -i -w ^Password   TotalBackup.cfg | cut -d'=' -f2)   
 fi
 
 if [ -z "$MountPath" ]; then
@@ -74,102 +90,127 @@ if [ ! -d $BackupPath ]; then
    exit
 fi
 
+####################################################################################
+IncrementDir=`date +%Y-%m-%d`
+Current=files
+####################################################################################
+
 # все на месте ? тогда поехали
 
 #вычислим размер папки с архивами ДО архивирования
 StartSize=`du $BackupPath -s -b|cut -d/ -f1`
+StartSizeF=$(printf "%'.0d" $StartSize)
 #свободное место ДО архивирования
-FreeSize1=`df $BackupPath --block-size=1048576 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
-echo \* FreeSize of $BackupPath is `printf "%'.0d" $FreeSize1` MB        >>$log
-echo \* TotalSize of $BackupPath is [`printf "%'.0d" $StartSize`] bytes >>$log
+StartFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
+StartFreeF=$(printf "%'.0d" $StartFree)
 
-echo "############$User##############$Password##############################"    >>$log
+echo So, lets do it now                                                                                                                                                                            >$log
+echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
+echo '['"${Spac:$Width1}"':'"${Spac:$Width2}"':'"${Spac:Width3+${#StartTimeF}}"$StartTimeF':'"${Spac:$Width4}"':'"${Spac:$Width5}"':'"${Spac:$Width6+${#StartSizeF}}"$StartSizeF':'"${Spac:$Width7}"':'"${Spac:$Width8}"':'"${Spac:$Width9+${#StartFreeF}}"$StartFreeF']' >>$log
+echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
 
 # сначала сделаем обзор сети, получим список всех пингуемых хостов
 nmap -sP $Network -n >$LogPrefix/HostList.lst 2>&1
 
+HostCount=0
+HostLive=0
+
 # теперь пробежимся по спиcку хостов
-cat $LogPrefix/HostList.lst| while read line
-do 
+while read line
+do
   if [[ $line =~ "Nmap scan report for" ]]; then
-     pcStartTime=$(date +%s)
+     hostStartTime=$(date +%s)
+     hostStartTimeF=$(date +"%d-%m-%y %T")
+     HostCount=$((HostCount+1))
      IP=${line:21}
      echo .                                      >>$LogPrefix/StationParse.$IP     
      echo Берем строчку {$line}                  >>$LogPrefix/StationParse.$IP
      echo Получили из нее IP-адрес хоста [$IP]   >>$LogPrefix/StationParse.$IP
      nmblookup -A $IP                            >station
      echo Посмотрим, что за хост по адресу [$IP] >>$LogPrefix/StationParse.$IP
-     cat station                                 >>$LogPrefix/StationParse.$IP
-     echo Ну, теперь все ясно с этим хостом      >>$LogPrefix/StationParse.$IP
-     cat station | grep '<00>'  |grep -v '<GROUP>'  >>$LogPrefix/StationParse.$IP
+     cat station                                  >>$LogPrefix/StationParse.$IP
+     echo Ну, теперь все ясно с этим хостом:      >>$LogPrefix/StationParse.$IP
+     cat station | grep '<20>' |grep -v '<GROUP>' >>$LogPrefix/StationParse.$IP
      NetbiosName=`grep '<20>' station | grep -v '<GROUP>' |cut -d" " -f1 | sed 's/.*/\L&/' |sed 's/^[ \t]*//'`
      Alias=$NetbiosName
      echo Получается, Netbios имя хоста [$NetbiosName]>>$LogPrefix/StationParse.$IP
      grep MAC station                     >>$LogPrefix/StationParse.$IP
-     MAC=`grep 'MAC' station | cut -d" " -f4 | sed 's/-/:/g'`
+     MAC=$(grep 'MAC' station | cut -d" " -f4 | sed 's/-/:/g')
      echo Получается, MAC-адрес хоста [$MAC]     >>$LogPrefix/StationParse.$IP          
      rm station
-     echo -n Start `date +"%m-%d-%Y %T"` ' ' $IP${sp:0:14-${#IP}} ' '  $MAC ' ' $NetbiosName${sp:0:17-${#NetbiosName}} ' ' >>$log
+     #
      if [[ $MAC = '00:00:00:00:00:00' || -z $MAC  || -z $NetbiosName ]]; then         
-        echo [$IP] Это плохой хост. Мы не будем с ним работать >>$LogPrefix/StationParse.$IP
-        echo bad host, exiting! >>$log
+        echo [$IP] Это какой-то плохой хост. Мы не будем с ним работать >>$LogPrefix/StationParse.$IP
      else
-        echo Отлично, дальше работаем с $NetbiosName, [$Alias], [$IP], [$MAC] >>$LogPrefix/StationParse.$IP
+        echo Отлично, дальше работаем с хостом $NetbiosName, [$IP], [$MAC] >>$LogPrefix/StationParse.$IP
+        # запишем хост в список хостов, на долгую память
+        if [[    $(grep -c -i ^$MAC TotalHostList.tbk ) -eq 0 ]]; then
+           echo $MAC $IP"${Spac:0:13-${#IP}}" $NetbiosName $(date +"%d-%m-%y %T")  >>TotalHostList.tbk
+        fi
         # вычислим алиас станции. если он есть
         if [ -f aliases.tbk ] ;then
            # попробуем вычислить алиас компа
            echo Определим Alias, например >>$LogPrefix/StationParse.$IP
-           # начнем с MAC адреса           
-           if     [[ `grep -c -i $MAC aliases.tbk ` -ne 0 ]]; then
-              Alias=`grep    -i $MAC aliases.tbk | cut -d' ' -f2`
-              echo Получили алиас по MAC [$Alias] >>$LogPrefix/StationParse.$IP
-           elif   [[ `grep -c $IP' ' aliases.tbk ` -ne 0 ]]; then
-              Alias=`grep    $IP' ' aliases.tbk| cut -d' ' -f2`
-              echo Получили алиас по ИП [$Alias] >>$LogPrefix/StationParse.$IP                                       
-           elif   [[ `grep -c -i -w $NetbiosName' '  aliases.tbk ` -ne 0 ]]; then
-              Alias=`grep    -i -w $NetbiosName' '  aliases.tbk | cut -d' ' -f2`
-              echo Получили алиас по Netbios [$Alias] >>$LogPrefix/StationParse.$IP           
+           # начнем с MAC адреса                      
+           if [[ $(grep -c -i ^$MAC aliases.tbk ) -ne 0 ]]; then
+              Alias=$(grep -i ^$MAC aliases.tbk)              
+              Alias=${Alias#$MAC}
+              echo Получили алиас по MAC [$Alias] >>$LogPrefix/StationParse.$IP              
+           elif  [[ $(grep -c -w ^$IP aliases.tbk) -ne 0 ]]; then
+              Alias=$(grep    -w ^$IP aliases.tbk)
+              Alias=${Alias#$IP}
+              echo Получили алиас по IP [$Alias] >>$LogPrefix/StationParse.$IP                                       
+           elif  [[ $(grep -c -i ^$NetbiosName' ' aliases.tbk) -ne 0 ]]; then
+              # сначала берем строку
+              Alias=$(grep -i ^$NetbiosName' ' aliases.tbk)
+              # Избавляемся от двойных и больше пробелов
+              Alias=${Alias}
+              # а потом тупо удаляем первое слово, считая что это оно -  ^$NetbiosName
+              Alias=${Alias:$(expr index "$Alias" ' ')}
+              # и заменим пробелы
+              Alias=${Alias// /_}
+              # лениво все это в одну строку писать просто
+              echo Получили алиас по Netbios [$Alias] >>$LogPrefix/StationParse.$IP                                       
            fi
+           # если Алиас присвоился пустой - обратно сделаем его равным NetbiosName
+           if [[ -z $Alias ]]; then Alias=$NetbiosName; fi
         fi
-        echo -n [$Alias]${sp:0:18-${#Alias}} ' '  >>$log
         # Проверим, не в черном ли списке станция
         # черный список - все станции, кроме этих
         if [ -f pc-exclude.tbk ]; then
-           if [[ `grep -c       $IP          pc-exclude.tbk` -ne 0 || \
-                 `grep -c -i    $MAC         pc-exclude.tbk` -ne 0 || \
-                 `grep -c -i -w $NetbiosName pc-exclude.tbk` -ne 0 || \
-                 `grep -c -i -w $Alias       pc-exclude.tbk` -ne 0 ]]; then
-              echo ОПА! IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] в черном списке! Проходим мимо этого хоста.... >>$LogPrefix/StationParse.$IP                         
+           if [[ $(grep -c -w  ^$IP          pc-exclude.tbk) -ne 0 || \
+                 $(grep -c -i  ^$MAC         pc-exclude.tbk) -ne 0 || \
+                 $(grep -c -i  ^$NetbiosName' ' pc-exclude.tbk) -ne 0 || \
+                 $(grep -c -i  ^$Alias' '       pc-exclude.tbk) -ne 0 ]]; then
+              echo ОПА! IP-[$IP:$(grep -c -w ^$IP pc-exclude.tbk)] \
+                        MAC-[$MAC:$(grep -c -i ^$MAC pc-exclude.tbk)] \
+                        Netbios-[$NetbiosName:$(grep -c -i ^$NetbiosName' ' pc-exclude.tbk)] \
+                        Alias-[$Alias:$(grep -c -i ^$Alias' ' pc-exclude.tbk)] в черном списке! Проходим мимо этого хоста.... >>$LogPrefix/StationParse.$IP
               Alias=''
-              echo Black listed, skiping >>$log
            fi
         fi                      
         # На всякий случай проверим, в белом ли списке станция
         # белый список - только станции из этого списка
         if [ -f pc-include.tbk ]; then
-           if [[ `grep -c       $IP          pc-include.tbk` -ne 0 ||\
-                 `grep -c -i    $MAC         pc-include.tbk` -ne 0 ||\
-                 `grep -c -i -w $NetbiosName pc-include.tbk` -ne 0 ||\
-                 `grep -c -i -w $Alias       pc-include.tbk` -ne 0 ]]; then                 
-              echo УРА! IP-[$IP `grep -c $IP pc-include.tbk`] \
-                        MAC-[$MAC `grep -c -i $MAC pc-include.tbk`] \
-                        Netbios-[$NetbiosName `grep -c -i -w $NetbiosName pc-include.tbk`] \
-                        Alias-[$Alias `grep -c -i -w $Alias pc-include.tbk`] в белом списке! Это удача, работаем с этим хостом!>>$LogPrefix/StationParse.$IP
+           if [[ $(grep -c -w ^$IP          pc-include.tbk) -ne 0 ||\
+                 $(grep -c -i ^$MAC         pc-include.tbk) -ne 0 ||\
+                 $(grep -c -i ^$NetbiosName' ' pc-include.tbk) -ne 0 ||\
+                 $(grep -c -i ^$Alias' '       pc-include.tbk) -ne 0 ]]; then
+              echo УРА! IP-[$IP $(grep -c ^$IP pc-include.tbk)] \
+                        MAC-[$MAC $(grep -c -i ^$MAC pc-include.tbk)] \
+                        Netbios-[$NetbiosName $(grep -c -i ^$NetbiosName' ' pc-include.tbk)] \
+                        Alias-[$Alias $(grep -c -i ^$Alias' ' pc-include.tbk)] в белом списке! Это удача, работаем с этим хостом!>>$LogPrefix/StationParse.$IP
            else
               Alias=''
-              echo Но как? IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] НЕ в белом списке! проходим мимо этого хоста... >>$LogPrefix/StationParse.$IP
-              echo not in White list, skiping >>$log
-           fi                                                                                                                 
-        fi        
-        # Алиас задан? значит в белом списке или не в черном! РАБОТАЕМ!
+              echo Как же так? IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] НЕ в белом списке! проходим мимо этого хоста... >>$LogPrefix/StationParse.$IP
+           fi
+        fi
+        # Алиас задан? значит имеется имя хоста и он в белом списке или не в черном! РАБОТАЕМ!
         if [[ -n $Alias ]]; then
+           HostLive=$((HostLive+1))
            # создадим  папочку, куда будем бэкапить именно этот хост  (если еще нет такой папки)
-           if [ ! -d $BackupPath/$Alias ]; then  mkdir -p $BackupPath/$Alias; fi                      
+           if [ ! -d $BackupPath/$Alias ]; then  mkdir -p $BackupPath/$Alias; fi
            #
-           # измерим размер папочки с имеющимся архивом
-           BackupSizeBeforeBackup=`du $BackupPath/$Alias -s -b|cut -d/ -f1`
-           echo -n $BackupPath/$Alias ${sp:0:50-${#BackupPath}-${#Alias}} size before is `printf "%'.0d" $BackupSizeBeforeBackup` bytes " " >>$log
-              
            # теперь посмотрим, что расшарено на этом хосте 
            echo Список открытых шар на $IP для $User:                       >>$LogPrefix/StationParse.$IP
            smbclient -L $IP -U $User%$Password -g | grep Disk | grep -v '$|'> shares.lst 2>&1
@@ -177,113 +218,181 @@ do
            cat shares.lst                                                   >>$LogPrefix/StationParse.$IP
            echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
            # теперь пробежимся по полученному списку дисковых шар
-           cat shares.lst| while read shareline
-              do
-                ShareName=`echo $shareline | cut --delimiter="|" -f2`
-                Share_Name=`echo $ShareName | sed 's/ /_/g'`
-                # echo создаем папку $MountPath/$NetbiosName/$ShareName
-                # создадим папочку, куда будем монтировать для каждой шары (если еще нет такой папки)
-                if [ ! -d "$MountPath/$Alias/$Share_Name" ];  then mkdir -p "$MountPath/$Alias/$Share_Name" ; fi
-                # ну чо, теперь смонтируем эту шару. то есть хотя бы попробуем
-                echo ......                                                                                                 >>$LogPrefix/StationParse.$IP
-                echo Пробуем монтировать $User:$Password //$IP/$ShareName $MountPath/$Alias/$Share_Name                     >>$LogPrefix/StationParse.$IP
-                mount "//$IP/$ShareName" "$MountPath/$Alias/$Share_Name" -o user=$User,password=$Password,iocharset=utf8,ro >>$LogPrefix/StationParse.$IP 2>&1
-                Code=$?
-                MountSize=`du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1`
-                if [ $Code -eq 0 ];  then                 
-                   echo //$IP/$ShareName смонтирован в $MountPath/$Alias/$Share_Name, его размер [$MountSize]! >>$LogPrefix/StationParse.$IP
-                else 
-                   echo [!!==ERROR==!!] Мониторование //$IP/$ShareName в $MountPath/$Alias неудачно, код $Code >>$LogPrefix/StationParse.$IP     
-                   ## надо удалить папочку тогда, зачем она пустая ?                         
-                   if [[ $MountSize -gt 0 ]]; then
-                      echo Это странно, $MountPath/$Alias/$Share_Name все-таки смонтирован, его размер [$MountSize] >>$LogPrefix/StationParse.$IP
-                   else
-                      rm -r $MountPath/$Alias/$Share_Name 
-                   fi
-                fi        
-              done            
-              rm shares.lst
-              # если было хотя бы одно успешное монтирование - БЭКАААААП!!
-              if [ -d $MountPath/$Alias ]; then
-                 AliasSize=`du $MountPath/$Alias -s -b|cut -d/ -f1`              
-                 if [[ $AliasSize -gt 0 ]]; then
-                    echo .     >>$LogPrefix/StationParse.$IP
-                    echo `date`. Итого доступный размер всех шар для $Alias составляет [`printf "%'.0d" $AliasSize` MB] б. Работаем с этим объемом...  >>$LogPrefix/StationParse.$IP
-                    #    поехалиииииииии            
-                    ArchiveRoot=$BackupPath/$Alias
-                    IncrementDir=`date +%Y-%m-%d`
-                    SyncOptions="-avr -d --force --ignore-errors --delete --delete-excluded --backup --backup-dir=$ArchiveRoot/$IncrementDir -h --log-file=$LogPrefix/rsync-$Alias.log"
-                    Current=files
-                    
-                    ## проверим, есть ли условия фильтрации
-                    if [ -f include.$Alias ];then
-                        # !!!! елки палки!! http://superuser.com/questions/256751/make-rsync-case-insensitive
-                        perl -pe 's/([a-z])/[\U$1\E$1]/g' include.$Alias >include
-                        #
-                        SyncOptions=$SyncOptions" --include-from include "
-                    elif [ -f include.tbk ]; then
-                        perl -pe 's/([a-z])/[\U$1\E$1]/g' include.tbk >include
-                        SyncOptions=$SyncOptions" --include-from include "
-                    fi
-                    
-                    ########## http://wiki.dieg.info/rsync
-                    ########## http://www.sanfoundry.com/rsync-command-usage-examples-in-linux/
-                    
-                    echo Поехали! RSYNC $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current >$LogPrefix/StationRSync.$IP
-                    echo `date` выполним rsync для $Alias >>$log
-                    cat include >>$LogPrefix/StationRSync.$IP
-                    rsync $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current >>$LogPrefix/StationRSync.$IP 2>&1
-                    Code=$?
-                    if [ $Code -ne 0 ]; then echo `date` Ошибка Rsync code is $Code!  >>$LogPrefix/StationBadRSync.$IP ; fi
-                    #
-                    if [ -f include ];then  rm include; fi
-                    #
-                    echo `date` выполнили rsync для $Alias >>$log
-                    BackupSizeAfterBackup=`du $BackupPath/$Alias -s -b|cut -d/ -f1`
-                    echo Size after rsync is `printf "%'.0d" $BackupSizeAfterBackup`, change `printf "%'.0d" $(($BackupSizeAfterBackup  - $BackupSizeBeforeBackup ))`. ALL DONE. >>$log
-                    ##########
-                    #           
-                    # и теперь не забыть все размонтировать!
-                    mount | grep -i $MountPath | while read mountline
-                    do
-                      mountline=$MountPath${mountline##*$MountPath}
-                      mountline=`echo $mountline | cut -d' ' -f1`
-                      echo Размонтируем [$mountline] >>$LogPrefix/StationParse.$IP 2>&1
-                      umount $mountline              >>$LogPrefix/StationParse.$IP 2>&1
-                    done                            
-                    echo `date` На работу с $Alias ушло $(( $(date +%s) - $pcStartTime )) сек.   >>$LogPrefix/StationParse.$IP
-                 else
-                    echo But size $MountPath/$Alias is 0, so exiting. >>$log 
-                 fi
-              else
-                 echo Alas, $MountPath/$Alias has no shares, sad but true. May be move it to Blacklist ? Exiting now.>>$log
+           ShareLive=0
+           ShareCount=0
+           #
+           while read shareline
+           do
+               ShareCount=$((ShareCount+1))
+               ShareName=$(echo $shareline | cut --delimiter="|" -f2)
+               Share_Name=${ShareName// /_}
+               #
+               echo создаем папку $MountPath/$Alias/$Share_Name >>$LogPrefix/StationParse.$IP
+               # создадим папочку, куда будем монтировать для каждой шары (если еще нет такой папки)
+               if [ ! -d $MountPath/$Alias/$Share_Name ];  then mkdir -p $MountPath/$Alias/$Share_Name ; fi
+               #
+               # ну чо, теперь смонтируем эту шару. то есть хотя бы попробуем
+               echo Пробуем монтировать $User:$Password //$IP/$ShareName $MountPath/$Alias/$Share_Name                     >>$LogPrefix/StationParse.$IP
+               mount "//$IP/$ShareName" "$MountPath/$Alias/$Share_Name" -o user=$User,password=$Password,iocharset=utf8,ro >>$LogPrefix/StationParse.$IP 2>&1
+               Code=$?
+               echo Код монтирования $Code >>$LogPrefix/StationParse.$IP
+               MountSize=$(du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1)
+               BackupSize=$(du $BackupPath/$Alias/$Current/$Share_Name -s -b|cut -d/ -f1)
+               if [[ $Code -eq 0 ]];  then
+                  ShareLive=$((ShareLive+1))
+                  ShareNames[$ShareLive]=${Share_Name:0:-$Width1}
+                  #
+                  # Размер папки, которую мы будем копировать (без учета фильтров) 
+                  ShareSize[$ShareLive]=$MountSize
+                  ShareSizeF[$ShareLive]=$(printf "%'.0d" ${ShareSize[$ShareLive]})
+                  # это размер уже скопированного
+                  BackupShareStartSize[$ShareLive]=$BackupSize
+                  BackupShareStartSizeF[$ShareLive]=$(printf "%'.0d" ${BackupShareStartSize[$ShareLive]})
+                  #
+                  echo //$IP/$ShareName смонтирован в $MountPath/$Alias/$Share_Name, его размер ${ShareSizeF[$ShareLive]} >>$LogPrefix/StationParse.$IP
+                  echo а размер $BackupPath/$Alias/$Current/$Share_Name до копировани составляет ${BackupShareStartSizeF[$ShareLive]} >>$LogPrefix/StationParse.$IP
+               else 
+                  echo [!!==ERROR==!!] Монтирование //$IP/$ShareName в $MountPath/$Alias/$Share_Name неудачно, код $Code >>$LogPrefix/StationParse.$IP
+                  echo [!!==ERROR==!!] Монтирование "//$IP/$ShareName" в $MountPath/$Alias/$Share_Name неудачно, код $Code >>$BadLog
+                  ## надо удалить папочку тогда, зачем она пустая ?
+                  if [[ $MountSize -gt 0 ]]; then
+                     echo Это странно, $MountPath/$Alias/$Share_Name все-таки смонтирован, его размер [$MountSize] >>$LogPrefix/StationParse.$IP
+                  else
+                     rm -r $MountPath/$Alias/$Share_Name
+                  fi
+               fi
+           done < shares.lst
+           rm shares.lst
+           #
+           # если было хотя бы одно успешное монтирование - БЭКАААААП!!
+           if [[ $ShareLive -gt 0 ]]; then
+              #
+              ArchiveRoot=$BackupPath/$Alias
+              SyncOptions="-avr -d --force --ignore-errors --delete --delete-excluded --backup --backup-dir=$ArchiveRoot/$IncrementDir -h --log-file=$LogPrefix/rsync-$Alias.log"
+              ## проверим, есть ли условия фильтрации
+              if [ -f include.$Alias ];then
+                 # !!!! елки палки!! http://superuser.com/questions/256751/make-rsync-case-insensitive
+                 perl -pe 's/([a-z])/[\U$1\E$1]/g' include.$Alias >include
+                 #
+                 SyncOptions=$SyncOptions" --include-from include "
+              elif [ -f include.tbk ]; then
+                 perl -pe 's/([a-z])/[\U$1\E$1]/g' include.tbk >include
+                 SyncOptions=$SyncOptions" --include-from include "
               fi
+              # 
+              # измерим размер папочки с имеющимся архивом (без учета бэкапов) до начала архивации. ХЗ зачем.
+              if [ -d $BackupPath/$Alias/$Current ]; then
+                 hostStartSize=$(du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1) 
+                 hostStartSizeF=$(printf "%'.0d" $hostStartSize)
+              fi
+              ########## http://wiki.dieg.info/rsync
+              ########## http://www.sanfoundry.com/rsync-command-usage-examples-in-linux/
+              #              
+              echo Поехали! RSYNC $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current >$LogPrefix/StationRSync.$IP
+              cat include                                                               >>$LogPrefix/StationRSync.$IP
+              rsync $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current               >>$LogPrefix/StationRSync.$IP 2>&1
+              Code=$?
+              if [ $Code -ne 0 ]; then echo `date` Ошибка Rsync code is $Code!          >>$LogPrefix/StationBadRSync.$IP ; fi
+              #
+              if [ -f include ];then rm include; fi
+              #
+              # и теперь не забыть все размонтировать!
+              mount | grep -i $MountPath | while read mountline
+              do
+                mountline=$MountPath${mountline##*$MountPath}
+                mountline=$(echo $mountline | cut -d' ' -f1)
+                echo Размонтируем [$mountline] >>$LogPrefix/StationParse.$IP 2>&1
+                umount $mountline              >>$LogPrefix/StationParse.$IP 2>&1
+              done                            
+              #
+              hostStopTime=$(date +%s)
+              hostStopTimeF=$(date +"%d-%m-%y %T")
+              hostTime=$((hostStopTime-hostStartTime))
+              hostTimeF=$(printf "%'.0d" $hostTime)
+              #
+              hostStopSize=$(du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1)
+              hostStopSizeF=$(printf "%'.0d" $hostStopSize)
+              #
+              hostSize=$((hostStopSize-hostStartSize))
+              hostSizeF=$(printf "%'.0d" $hostSize)
+              #
+              Col1=$(echo $IP"${Spac:0:13-${#IP}}"' '$NetbiosName)              
+              if [ $NetbiosName != $Alias ]; then Col1=$Col1' '"$Alias"; fi
+              Col1=${Col1:0:-$Width1}
+              Col2=$ShareLive'/'$ShareCount
+              echo '['"$Col1""${Spac:$Width1+${#Col1}}"':'"${Spac:$Width2+${#Col2}}"$Col2':'"${Spac:$Width3+${#hostStartTimeF}}"$hostStartTimeF':'"${Spac:$Width4+${#hostStopTimeF}}"$hostStopTimeF':'"${Spac:$Width5+${#hostTimeF}}"$hostTimeF':'"${Spac:$Width6+${#hostStartSizeF}}"$hostStartSizeF':'"${Spac:$Width7+${#hostStopSizeF}}"$hostStopSizeF':'"${Spac:$Width8+${#hostSizeF}}"$hostSizeF':'"${Spac:$Width9+${#MAC}}"$MAC']'  >>$log              
+              #
+              # посчитаем самую длинную шару этого хоста
+              MaxShareLen=0
+              MaxSize1Len=0
+              MaxSize2len=0
+              for I in `seq 1 $ShareLive`
+              do
+                if [[ ${#ShareNames[$I]} -gt $MaxShareLen ]]; then
+                   MaxShareLen=${#ShareNames[$I]}
+                fi
+                if [[ ${#ShareSizeF[$I]} -gt $MaxSize1Len ]]; then
+                   MaxSize1Len=${#ShareSizeF[$I]}
+                fi
+                if [[ ${#BackupShareStartSizeF[$I]} -gt $MaxSize2Len ]]; then
+                   MaxSize2Len=${#BackupShareStartSizeF[$I]}
+                fi
+              done
+              #
+              str=$ShareLive'/'$ShareCount
+              if [[ $ShareLive -gt 0 ]]; then
+              echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
+              fi
+              for I in `seq 1 $ShareLive`
+              do
+                BackupShareStopSize=$(du $BackupPath/$Alias/$Current/${ShareNames[$I]} -s -b|cut -d/ -f1)
+                BackupShareStopSizeF=$(printf "%'.0d" $BackupShareStopSize)    
+                BackupShareSize=$((BackupShareStopSize - BackupShareStartSize[$I]))
+                BackupShareSizeF=$(printf "%'.0d" $BackupShareSize)                
+                echo "$(printf ' %.0s' {1..50})"'['"${Spac:0:$((MaxShareLen+1-${#ShareNames[$I]}))}"${ShareNames[$I]}':'"${Spac:0:$((MaxSize1Len+1-${#ShareSizeF[$I]}))}"${ShareSizeF[$I]}':'"${Spac:0:$((MaxSize2Len+1-${#BackupShareStartSizeF[$I]}))}"${BackupShareStartSizeF[$I]}':'"${Spac:$Width3+${#BackupShareStopSizeF}}"$BackupShareStopSizeF':'$BackupShareSizeF"${Spac:$Width8+${#BackupShareSizeF}}"']' >>$log
+              done              
+              # разделитель между хостами
+              echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
+           else
+              echo Alas, $MountPath/$Alias has no shares, sad but true. Perhaps move it to Blacklist?  >>$LogPrefix/StationParse.$IP
+              echo $Alias [$IP] have no opened shares>>$BadLog
            fi
-     fi
+        fi # Alias is Empty
+     fi # Mac or IP or Netbiosname is empty
   fi
-done
-
-echo '######################################################################################' >>$log
-echo Finished at `date +"%m-%d-%Y %T"` after [`printf "%'.0d" $(( $(date +%s) - $StartTime ))`] seconds of hard working  >>$log
-FreeSize2=`df $BackupPath --block-size=1048576 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
-FreeSize3=$(( $FreeSize1 - $FreeSize2 ))
-NewBackupSize=`du $BackupPath -s -b|cut -d/ -f1`
-echo -n \* Freesize of $BackupPath is `printf "%'.0d" $FreeSize2` MB   >>$log
-if [ $FreeSize3 -ne 0 ]; then
-   echo , less by `printf "%'.0d" $FreeSize3` Mb                       >>$log
-else
-   echo , no change...                                                 >>$log
-fi   
-echo \* Full size of $BackupPath is `printf "%'.0d" $NewBackupSize` bytes and have delta in [`printf "%'.0d" $(( $NewBackupSize - $StartSize ))`] bytes >>$log
-echo That\'s all, folks!                                                                                                                                >>$log
+done < $LogPrefix/HostList.lst
 #
-
-
+StopTime=$(date +%s)
+StopTimeF=$(date +"%d-%m-%y %T")
+Time=$((StopTime-StartTime))
+TimeF=$(printf "%'.0d" $Time)
+#
+StopSize=`du $BackupPath -s -b|cut -d/ -f1`
+StopSizeF=$(printf "%'.0d" $StopSize)
+Size=$((StopSize-StartSize))
+SizeF=$(printf "%'.0d" $Size)
+#свободное место ПОСЛЕ архивирования
+StopFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
+StopFreeF=$(printf "%'.0d" $StopFree)
+#
+Col2=$HostLive'/'$HostCount
+echo '[ Итого'"${Spac:$Width1+6}"':'"${Spac:$Width2+${#Col2}}"$Col2':'"${Spac:Width3}"':'"${Spac:$Width4+${#StopTimeF}}"$StopTimeF':'"${Spac:$Width5+${#TimeF}}"$TimeF':'"${Spac:$Width6}"':'"${Spac:$Width7+${#StopSizeF}}"$StopSizeF':'"${Spac:$Width8+${#SizeF}}"$SizeF':'"${Spac:$Width9+${#StopFreeF}}"$StopFreeF']' $(printf "%'.0d" $((StartFree-StopFree))) >>$log
+echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
+#
+echo That\'s all, folks!                                                                                                                                >>$log
+if [ -f $BadLog ]; then    
+  echo                                                       >>$log
+  echo Oh wait.                                              >>$log
+  echo Look, there is some additional info about backup:     >>$log
+  cat $BadLog >>$log
+  rm $BadLog
+fi
+########################################
    # заархивируем логи, вдруг пригодится
    mkdir -p ./arclogs/`date +%Y`/`date +%m`
    tar -cvzf ./arclogs/`date +%Y`/`date +%m`/`date +%Y-%m-%d.%H-%M-%S`.tar.gz $LogPrefix >  /dev/null
-
-   # оставим только логи за последние 5 дней
+########################################
+   # и теперь оставим только последние 5 логов. остальное же в архиве
    WatchedDir="./logs"
    DirCnt=`ls -1 $WatchedDir | wc -l`
    MaxDirCnt=5
@@ -293,3 +402,4 @@ echo That\'s all, folks!                                                        
          rm -rf $WatchedDir/$OlderFile
          DirCnt=`ls -1 $WatchedDir | wc -l`
    done
+########################################
