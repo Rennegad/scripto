@@ -318,7 +318,7 @@ do
               #
               Col1=$(echo $IP"${Spac:0:13-${#IP}}"' '$NetbiosName)              
               if [ $NetbiosName != $Alias ]; then Col1=$Col1' '"$Alias"; fi
-              Col1=${Col1:0:-$Width1}
+              Col1=${Col1:0:-$Width1-1}
               Col2=$ShareLive'/'$ShareCount
               echo '['"$Col1""${Spac:$Width1+${#Col1}}"':'"${Spac:$Width2+${#Col2}}"$Col2':'"${Spac:$Width3+${#hostStartTimeF}}"$hostStartTimeF':'"${Spac:$Width4+${#hostStopTimeF}}"$hostStopTimeF':'"${Spac:$Width5+${#hostTimeF}}"$hostTimeF':'"${Spac:$Width6+${#hostStartSizeF}}"$hostStartSizeF':'"${Spac:$Width7+${#hostStopSizeF}}"$hostStopSizeF':'"${Spac:$Width8+${#hostSizeF}}"$hostSizeF':'"${Spac:$Width9+${#MAC}}"$MAC']'  >>$log              
               #
