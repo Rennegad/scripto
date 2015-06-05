@@ -164,9 +164,11 @@ do
               # сначала берем строку
               Alias=$(grep -i ^$NetbiosName' ' aliases.tbk)
               # Избавляемся от двойных и больше пробелов
+              echo Два $Alias
               Alias=${Alias}
+              echo Раз $Alias
               # а потом тупо удаляем первое слово, считая что это оно -  ^$NetbiosName
-              Alias=${Alias:$(expr index "$Alias" ' ')+1}
+              Alias=${Alias:$(expr index "$Alias" ' ')}
               # и заменим пробелы
               Alias=${Alias// /_}
               # лениво все это в одну строку писать просто
@@ -213,6 +215,7 @@ do
            #
            # теперь посмотрим, что расшарено на этом хосте 
            echo Список открытых шар на $IP для $User:                       >>$LogPrefix/StationParse.$IP
+           echo тэээкс $IP
            smbclient -L $IP -U $User%$Password -g | grep Disk | grep -v '$|'> shares.lst 2>&1
            echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
            cat shares.lst                                                   >>$LogPrefix/StationParse.$IP
@@ -352,7 +355,7 @@ do
                 echo '['"${Spac:0:$((MaxShareLen+1-${#ShareNames[$I]}))}"${ShareNames[$I]}':'"${Spac:0:$((MaxSize1Len+1-${#ShareSizeF[$I]}))}"${ShareSizeF[$I]}':'"${Spac:0:$((MaxSize2Len+1-${#BackupShareStartSizeF[$I]}))}"${BackupShareStartSizeF[$I]}':'"${Spac:$Width3+${#BackupShareStopSizeF}}"$BackupShareStopSizeF':'$BackupShareSizeF"${Spac:$Width8+${#BackupShareSizeF}}"']' >>$LogPrefix/StationParse.$IP
               done              
               # разделитель между хостами
-              echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
+              #echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
            else
               echo Alas, $MountPath/$Alias has no shares, sad but true. Perhaps move it to Blacklist?  >>$LogPrefix/StationParse.$IP
               echo $Alias [$IP] have no opened shares>>$BadLog
