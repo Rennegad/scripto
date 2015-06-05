@@ -353,10 +353,11 @@ do
                 BackupShareStopSizeF=$(printf "%'.0d" $BackupShareStopSize)    
                 BackupShareSize=$((BackupShareStopSize - BackupShareStartSize[$I]))
                 BackupShareSizeF=$(printf "%'.0d" $BackupShareSize)                
-                echo '['"${Spac:0:$((MaxShareLen+1-${#ShareNames[$I]}))}"${ShareNames[$I]}':'"${Spac:0:$((MaxSize1Len+1-${#ShareSizeF[$I]}))}"${ShareSizeF[$I]}':'"${Spac:0:$((MaxSize2Len+1-${#BackupShareStartSizeF[$I]}))}"${BackupShareStartSizeF[$I]}':'"${Spac:$Width3+${#BackupShareStopSizeF}}"$BackupShareStopSizeF':'$BackupShareSizeF"${Spac:$Width8+${#BackupShareSizeF}}"']' >>$LogPrefix/StationParse.$IP
+                echo '['"${Spac:0:$((MaxShareLen+1-${#ShareNames[$I]}))}"${ShareNames[$I]}':'"${Spac:0:$((MaxSize1Len+1-${#ShareSizeF[$I]}))}"${ShareSizeF[$I]}':'"${Spac:0:$((MaxSize2Len+1-${#BackupShareStartSizeF[$I]}))}"${BackupShareStartSizeF[$I]}':'"${Spac:$Width3+${#BackupShareStopSizeF}}"$BackupShareStopSizeF':'$BackupShareSizeF"${Spac:$Width8+${#BackupShareSizeF}}"']' >>shares.lst
+                cat shares.lst >>$LogPrefix/StationParse.$IP
+                if [ $I -eq 1 ]; then echo Shares on $Alias $IP >>AllShares.lst; fi
+                cat shares.lst >>AllShares.lst
               done              
-              # разделитель между хостами
-              #echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
            else
               echo Alas, $MountPath/$Alias has no shares, sad but true. Perhaps move it to Blacklist?  >>$LogPrefix/StationParse.$IP
               echo $Alias [$IP] have no opened shares>>$BadLog
@@ -383,7 +384,12 @@ Col2=$HostLive'/'$HostCount
 echo '[ Итого'"${Spac:$Width1+6}"':'"${Spac:$Width2+${#Col2}}"$Col2':'"${Spac:Width3}"':'"${Spac:$Width4+${#StopTimeF}}"$StopTimeF':'"${Spac:$Width5+${#TimeF}}"$TimeF':'"${Spac:$Width6}"':'"${Spac:$Width7+${#StopSizeF}}"$StopSizeF':'"${Spac:$Width8+${#SizeF}}"$SizeF':'"${Spac:$Width9+${#StopFreeF}}"$StopFreeF']' $(printf "%'.0d" $((StartFree-StopFree))) >>$log
 echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
 #
-echo That\'s all, folks!                                                                                                                                >>$log
+if [ -f AllShares.lst ]; then
+   echo Now some info about host shares >>$log
+   cat AllShares.lst                    >>$log
+   rm AllShares.lst
+fi
+echo That\'s all, folks!             >>$log
 if [ -f $BadLog ]; then    
   echo                                                       >>$log
   echo Oh wait.                                              >>$log
