@@ -349,7 +349,7 @@ do
                 BackupShareStopSizeF=$(printf "%'.0d" $BackupShareStopSize)    
                 BackupShareSize=$((BackupShareStopSize - BackupShareStartSize[$I]))
                 BackupShareSizeF=$(printf "%'.0d" $BackupShareSize)                
-                echo "$(printf ' %.0s' {1..50})"'['"${Spac:0:$((MaxShareLen+1-${#ShareNames[$I]}))}"${ShareNames[$I]}':'"${Spac:0:$((MaxSize1Len+1-${#ShareSizeF[$I]}))}"${ShareSizeF[$I]}':'"${Spac:0:$((MaxSize2Len+1-${#BackupShareStartSizeF[$I]}))}"${BackupShareStartSizeF[$I]}':'"${Spac:$Width3+${#BackupShareStopSizeF}}"$BackupShareStopSizeF':'$BackupShareSizeF"${Spac:$Width8+${#BackupShareSizeF}}"']' >>$log
+                echo '['"${Spac:0:$((MaxShareLen+1-${#ShareNames[$I]}))}"${ShareNames[$I]}':'"${Spac:0:$((MaxSize1Len+1-${#ShareSizeF[$I]}))}"${ShareSizeF[$I]}':'"${Spac:0:$((MaxSize2Len+1-${#BackupShareStartSizeF[$I]}))}"${BackupShareStartSizeF[$I]}':'"${Spac:$Width3+${#BackupShareStopSizeF}}"$BackupShareStopSizeF':'$BackupShareSizeF"${Spac:$Width8+${#BackupShareSizeF}}"']' >>$LogPrefix/StationParse.$IP
               done              
               # разделитель между хостами
               echo '['"${Line:$Width1}"'+'"${Line:$Width2}"'+'"${Line:$Width3}"'+'"${Line:$Width4}"'+'"${Line:$Width5}"'+'"${Line:$Width6}"'+'"${Line:$Width7}"'+'"${Line:$Width8}"'+'"${Line:$Width9}"']'       >>$log
