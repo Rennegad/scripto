@@ -164,13 +164,15 @@ do
               # сначала берем строку
               Alias=$(grep -i ^$NetbiosName' ' aliases.tbk)
               # Избавляемся от двойных и больше пробелов
-              echo Два $Alias
-              Alias=${Alias}
-              echo Раз $Alias
+              echo раз $Alias
+              Alias=$(echo $Alias)
+              echo два $Alias
               # а потом тупо удаляем первое слово, считая что это оно -  ^$NetbiosName
               Alias=${Alias:$(expr index "$Alias" ' ')}
+              echo три $Alias              
               # и заменим пробелы
               Alias=${Alias// /_}
+              echo нуи $Alias              
               # лениво все это в одну строку писать просто
               echo Получили алиас по Netbios [$Alias] >>$LogPrefix/StationParse.$IP                                       
            fi
@@ -217,6 +219,7 @@ do
            echo Список открытых шар на $IP для $User:                       >>$LogPrefix/StationParse.$IP
            echo тэээкс $IP
            smbclient -L $IP -U $User%$Password -g | grep Disk | grep -v '$|'> shares.lst 2>&1
+           echo тэээкс $IP
            echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
            cat shares.lst                                                   >>$LogPrefix/StationParse.$IP
            echo ----------------------------------------------------------- >>$LogPrefix/StationParse.$IP
