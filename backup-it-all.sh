@@ -358,9 +358,11 @@ do
                 if [ -f include ]; then 
                    while read mask
                    do
-                     if ${mask:0:1}=='+'; then
-                        echo $mask >>shares.lst
-                        du -ch $BackupPath/$Alias/$Current/${ShareNames[$I]}/$mask | tail -n 1 >>shares.lst
+                     if [[ ${mask:0:1} == '+' ]]; then
+                        mask=${mask:2}
+                        echo маска $mask '$mask' "$mask" >>shares.lst
+                        echo путь с маской $BackupPath/$Alias/$Current/${ShareNames[$I]}/$mask >>shares.lst
+                        #du -ch $BackupPath/$Alias/$Current/${ShareNames[$I]}/$mask | tail -n 1 >>shares.lst
                      fi
                    done < include
                 fi   
