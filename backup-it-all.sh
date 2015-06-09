@@ -357,10 +357,12 @@ do
                  # теперь надо бы посчитать в каждой шаре фавйлы по маскам
                 if [ -f include ]; then 
                    while read mask
-                   echo $mask >>shares.lst
-                   # du -ch *.cu | tail -n 1
+                   do
+                     if ${mask:0:1}=='+'; then
+                        echo $mask >>shares.lst
+                        du -ch $BackupPath/$Alias/$Current/${ShareNames[$I]}/$mask | tail -n 1 >>shares.lst
+                     fi
                    done < include
-                   rm include
                 fi   
               done              
               cat shares.lst >>AllShares.lst
