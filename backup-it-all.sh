@@ -355,17 +355,20 @@ do
                 cat shares.lst >>$LogPrefix/StationParse.$IP
                 if [ $I -eq 1 ]; then echo Shares on $Alias $IP >>AllShares.lst; fi
                  # теперь надо бы посчитать в каждой шаре фавйлы по маскам
-                if [ -f include ]; then 
-                   while read mask
-                   do
-                     if [[ ${mask:0:1} == '+' ]]; then
-                        mask=${mask:2}
-                        echo маска $mask '$mask' "$mask" >>shares.lst
-                        echo путь с маской $BackupPath/$Alias/$Current/${ShareNames[$I]}/$mask >>shares.lst
-                        #du -ch $BackupPath/$Alias/$Current/${ShareNames[$I]}/$mask | tail -n 1 >>shares.lst
-                     fi
-                   done < include
-                fi   
+                #if [ -f include ]; then 
+                #   while read mask
+                #   do
+                #     if [[ ${mask:0:1} == '+' ]]; then
+                #        mask=${mask:2}
+                #        echo маска $mask "$mask" >>shares.lst
+                #        echo путь с маской $BackupPath/$Alias/$Current/${ShareNames[$I]}/$mask >>shares.lst
+                #        #du -ch $BackupPath/$Alias/$Current/${ShareNames[$I]}/$mask | tail -n 1 >>shares.lst
+                #        Size1=$(find $BackupPath/$Alias/$Current/${ShareNames[$I]} -type f -name $mask -exec du -k {} \;|awk '{s+=$1}END{print s}')
+                #        echo $Size1 >>shares.lst
+                #        echo $(printf "%'.0d" $Size1) >>shares.lst
+                #     fi
+                #   done < include
+                #fi   
               done              
               cat shares.lst >>AllShares.lst
               if [ -f include ];then rm include; fi
