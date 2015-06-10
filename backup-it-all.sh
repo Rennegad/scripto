@@ -296,7 +296,7 @@ do
               cat include                                                               >>$LogPrefix/StationRSync.$IP
               rsync $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current               >>$LogPrefix/StationRSync.$IP 2>&1
               Code=$?
-              if [ $Code -ne 0 ]; then echo `date` Ошибка Rsync code is $Code!          >>$LogPrefix/StationBadRSync.$IP ; fi
+              if [ $Code -ne 0 ]; then echo `date` Ошибка Rsync code is $Code!          >>$LogPrefix/StationBadRSync.$Alias ; fi
               #
               # и теперь не забыть все размонтировать!
               mount | grep -i $MountPath | while read mountline
