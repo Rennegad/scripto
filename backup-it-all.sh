@@ -147,18 +147,18 @@ do
            # попробуем вычислить алиас компа
            echo Определим Alias, например >>$LogPrefix/StationParse.$IP
            # начнем с MAC адреса                      
-           if [[ $(grep -c -i [$MAC] aliases.tbk ) -ne 0 ]]; then
-              Alias=$(grep -i [$MAC] aliases.tbk)              
-              Alias=${Alias#[$MAC]}
+           if [[ $(grep -c -i ^$MAC= aliases.tbk ) -ne 0 ]]; then
+              Alias=$(grep -i ^$MAC= aliases.tbk)              
+              Alias=${Alias#$MAC=}
               echo Получили алиас по MAC [$Alias] >>$LogPrefix/StationParse.$IP              
-           elif  [[ $(grep -c -w [$IP] aliases.tbk) -ne 0 ]]; then
-              Alias=$(grep    -w [$IP] aliases.tbk)
-              Alias=${Alias#[$IP]}
+           elif  [[ $(grep -c -w ^$IP= aliases.tbk) -ne 0 ]]; then
+              Alias=$(grep    -w ^$IP= aliases.tbk)
+              Alias=${Alias#$IP=}
               echo Получили алиас по IP [$Alias] >>$LogPrefix/StationParse.$IP                                       
-           elif  [[ $(grep -c -i [$NetbiosName] aliases.tbk) -ne 0 ]]; then
+           elif  [[ $(grep -c -i $NetbiosName aliases.tbk) -ne 0 ]]; then
               # сначала берем строку
-              Alias=$(grep -i [$NetbiosName] aliases.tbk)
-              Alias=${Alias#[$NetbiosName]}
+              Alias=$(grep -i ^$NetbiosName= aliases.tbk)
+              Alias=${Alias#$NetbiosName=}
               echo Получили алиас по Netbios [$Alias] >>$LogPrefix/StationParse.$IP                                       
            fi
            if [[ -n $Alias ]]; then 
@@ -275,10 +275,8 @@ do
                  SyncOptions=$SyncOptions" --include-from include "
               fi
               ## проверим опции копирования для этого хоста
-              if [ -n SpeedLimit.$Alias ]; then
-                 SyncOptions=$SyncOptions" --bwlimit "SpeedLimit.$Alias
-              elif [ -n SpeedLimit ]; then
-                 SyncOptions=$SyncOptions" --bwlimit "SpeedLimit
+              if [ -n SpeedLimit ]; then
+                 SyncOptions=$SyncOptions" --bwlimit "$SpeedLimit
               fi
               # 
               # измерим размер папочки с имеющимся архивом (без учета бэкапов) до начала архивации. ХЗ зачем.
@@ -294,7 +292,7 @@ do
               ####################
               #                  #
               ####################
-              rsync $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current               >>$LogPrefix/StationRSync.$IP 2>&1
+##              #rsync $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current               >>$LogPrefix/StationRSync.$IP 2>&1
               Code=$?
               if [ $Code -ne 0 ]; then echo `date` Ошибка Rsync code is $Code!          >>$LogPrefix/StationBadRSync.$Alias ; fi
               ####################
@@ -375,6 +373,84 @@ do
               done              
               cat shares.lst >>AllShares.lst
               if [ -f include ];then rm include; fi
+              #
+              ######
+              # это первый архив за месяц ? сохраним его отдельно
+              Mask=`date +%Y`-`date +%m`
+              MontCnt=`ls $BackupPath/$Alias | grep $Mask | wc -l`
+              if [ $MonthCnt=1 ]; then
+                 ThisMonthPath=`ls $BackupPath/$Alias | grep $Mask `
+                 if [ ! -d $BackupPath/$Alias/Monthly-$Mask ]; then
+                    echo cp $BackupPath/$Alias/$ThisMonthPath $BackupPath/$Alias/Monthly-$Mask
+                    cp -r $BackupPath/$Alias/$ThisMonthPath $BackupPath/$Alias/Monthly-$Mask
+                 fi
+              fi
+              #
+              # настало время разобраться с архивами
+              # сначала заархивируем самый свежий бакап
+              LastBackup=`ls $BackupPath/$Alias | grep ^20 |tail -1`
+              if [ ! -e $BackupPath/$Alias/$LastBackup/$Alias-$LastBackup.7z ]; then 
+                 Is7Z=`dpkg -l | grep p7zip | wc -l`
+                 if [ $Is7Z -eq 0 ]; then
+                    apt-get install p7zip-full -y
+                 fi
+                 StartTime=$(date +%s)        
+                 7z a -r -mx0 $BackupPath/$Alias/$Alias-$LastBackup-0.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >time.log
+                 StartTime=$(date +%s)
+                 7z a -r -mx1 $BackupPath/$Alias/$Alias-$LastBackup-1.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >time.log
+                 StartTime=$(date +%s)                 
+                 7z a -r -mx2 $BackupPath/$Alias/$Alias-$LastBackup-2.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >>time.log
+                 StartTime=$(date +%s)                 
+                 7z a -r -mx3 $BackupPath/$Alias/$Alias-$LastBackup-3.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >>time.log
+                 StartTime=$(date +%s)                 
+                 7z a -r -mx4 $BackupPath/$Alias/$Alias-$LastBackup-4.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >>time.log
+                 StartTime=$(date +%s)                 
+                 7z a -r -mx5 $BackupPath/$Alias/$Alias-$LastBackup-5.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >>time.log
+                 StartTime=$(date +%s)                 
+                 7z a -r -mx6 $BackupPath/$Alias/$Alias-$LastBackup-6.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >>time.log
+                 StartTime=$(date +%s)                 
+                 7z a -r -mx7 $BackupPath/$Alias/$Alias-$LastBackup-7.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >>time.log
+                 StartTime=$(date +%s)                 
+                 7z a -r -mx8 $BackupPath/$Alias/$Alias-$LastBackup-8.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >>time.log
+                 StartTime=$(date +%s)                 
+                 7z a -r -mx9 $BackupPath/$Alias/$Alias-$LastBackup-9.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime)) >>time.log
+                 
+                 #if [ -e $BackupPath/$Alias/$Alias-$LastBackup.7z ]; then
+                 #   # теперь надо удалить все, кроме самого архива конечно
+                 #   rm -r $BackupPath/$Alias/$LastBackup
+                 #   mkdir $BackupPath/$Alias/$LastBackup
+                 #   mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup
+                 #fi
+              fi         
+              # теперь оставим только нужное количество бэкапов
+              if [ -n $LastBackupsCount ]; then
+                 echo это я когда нибуль потом сделаю
+              fi
+              #
+              if [ -n $MinFreeSpace ]; then
+                 # наконец проверим свободное место и если его мало - пошлем письмо и удалим старые бакапы
+                 FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
+                 printf "так. Свободное место "$FreeSpace", а нам надо"$MinFreeSpace  | /usr/sbin/ssmtp adkins@nwgsm.ru -f TotalBackup
+                 # удалим самые старые бакапы
+                 while [ $FreeSpace -lt $MinFreeSpace ]; do
+                       OlderDir=`ls -1 -t $BackupPath/$Alias | grep ^20 | tail -1`
+                       echo 'Эээээй, нужно удалить старый бакап '$BackupPath/$Alias/$OlderDir
+                       rm -r $BackupPath/$Alias/$OlderDir
+                       FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
+                 done
+                 printf "теперь свободное место "$StopFree | /usr/sbin/ssmtp adkins@nwgsm.ru -f TotalBackup
+              fi
+              ########################################
            else
               echo Alas, $MountPath/$Alias has no shares, sad but true. Perhaps move it to Blacklist?  >>$LogPrefix/StationParse.$IP
               echo $Alias [$IP] have no opened shares>>$BadLog
@@ -423,20 +499,11 @@ fi
    WatchedDir="./logs"
    DirCnt=`ls -1 $WatchedDir | wc -l`
    MaxDirCnt=5
-
    while [ $DirCnt -gt $MaxDirCnt ]; do
          OlderFile=$(ls -1 -t $WatchedDir | tail -1)
          rm -rf $WatchedDir/$OlderFile
          DirCnt=`ls -1 $WatchedDir | wc -l`
    done
 ########################################
-   # настало время разобраться с архивами
-   if [ -n $LastBackupsCount ]; then
-      WatchedDir=$BackupPath/$Alias
-      
-   fi
-   # проверим свободное место и если его мало - пошлем письмо
-   if [ -n $MinFreeSpace ]; then
-      printf "Свободное место "$StopFree | /usr/sbin/ssmtp adkins@nwgsm.ru -f TotalBackup
-   fi
+#                                      #
 ########################################
