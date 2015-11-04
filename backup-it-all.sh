@@ -49,13 +49,8 @@ Width9=-18
 StartTime=$(date +%s)
 StartTimeF=$(date +"%d-%m-%y %T")
 
-if [ -f TotalBackup.cfg ]; then
-   MountPath=$(grep  -i -w ^MountPath  TotalBackup.cfg | cut -d'=' -f2)
-   BackupPath=$(grep -i -w ^BackupPath TotalBackup.cfg | cut -d'=' -f2)
-   Network=$(grep    -i -w ^Network    TotalBackup.cfg | cut -d'=' -f2)
-   User=$(grep       -i -w ^User       TotalBackup.cfg | cut -d'=' -f2)
-   Password=$(grep   -i -w ^Password   TotalBackup.cfg | cut -d'=' -f2)   
-fi
+#,thtv настройки
+source TotalBackup.cfg
 
 if [ -z "$MountPath" ]; then
    echo Не определен MountPath. Принимаем по  умолчанию /mnt/users >>$log
@@ -152,32 +147,28 @@ do
            # попробуем вычислить алиас компа
            echo Определим Alias, например >>$LogPrefix/StationParse.$IP
            # начнем с MAC адреса                      
-           if [[ $(grep -c -i ^$MAC aliases.tbk ) -ne 0 ]]; then
-              Alias=$(grep -i ^$MAC aliases.tbk)              
-              Alias=${Alias#$MAC}
+           if [[ $(grep -c -i [$MAC] aliases.tbk ) -ne 0 ]]; then
+              Alias=$(grep -i [$MAC] aliases.tbk)              
+              Alias=${Alias#[$MAC]}
               echo Получили алиас по MAC [$Alias] >>$LogPrefix/StationParse.$IP              
-           elif  [[ $(grep -c -w ^$IP aliases.tbk) -ne 0 ]]; then
-              Alias=$(grep    -w ^$IP aliases.tbk)
-              Alias=${Alias#$IP}
+           elif  [[ $(grep -c -w [$IP] aliases.tbk) -ne 0 ]]; then
+              Alias=$(grep    -w [$IP] aliases.tbk)
+              Alias=${Alias#[$IP]}
               echo Получили алиас по IP [$Alias] >>$LogPrefix/StationParse.$IP                                       
-           elif  [[ $(grep -c -i ^$NetbiosName' ' aliases.tbk) -ne 0 ]]; then
+           elif  [[ $(grep -c -i [$NetbiosName] aliases.tbk) -ne 0 ]]; then
               # сначала берем строку
-              Alias=$(grep -i ^$NetbiosName' ' aliases.tbk)
-              # Избавляемся от двойных и больше пробелов
-              #echo раз $Alias
-              Alias=$(echo $Alias)
-              #echo два $Alias
-              # а потом тупо удаляем первое слово, считая что это оно -  ^$NetbiosName
-              Alias=${Alias:$(expr index "$Alias" ' ')}
-              #echo три $Alias              
-              # и заменим пробелы
-              Alias=${Alias// /_}
-              #echo нуи $Alias              
-              # лениво все это в одну строку писать просто
+              Alias=$(grep -i [$NetbiosName] aliases.tbk)
+              Alias=${Alias#[$NetbiosName]}
               echo Получили алиас по Netbios [$Alias] >>$LogPrefix/StationParse.$IP                                       
            fi
-           # если Алиас присвоился пустой - обратно сделаем его равным NetbiosName
-           if [[ -z $Alias ]]; then Alias=$NetbiosName; fi
+           if [[ -n $Alias ]]; then 
+              # Избавляемся от двойных и больше пробелов
+              Alias=$(echo $Alias)
+              # и заменим пробелы на _
+              Alias=${Alias// /_} 
+           else # если Алиас присвоился пустой - обратно сделаем его равным NetbiosName
+               Alias=$NetbiosName
+           fi
         fi
         # Проверим, не в черном ли списке станция
         # черный список - все станции, кроме этих
@@ -274,7 +265,7 @@ do
               ArchiveRoot=$BackupPath/$Alias
               SyncOptions="-avr -d --force --ignore-errors --delete --delete-excluded --backup --backup-dir=$ArchiveRoot/$IncrementDir -h --log-file=$LogPrefix/rsync-$Alias.log"
               ## проверим, есть ли условия фильтрации
-              if [ -f include.$Alias ];then
+              if [ -f include.$Alias ]; then
                  # !!!! елки палки!! http://superuser.com/questions/256751/make-rsync-case-insensitive
                  perl -pe 's/([a-z])/[\U$1\E$1]/g' include.$Alias >include
                  #
@@ -282,6 +273,12 @@ do
               elif [ -f include.tbk ]; then
                  perl -pe 's/([a-z])/[\U$1\E$1]/g' include.tbk >include
                  SyncOptions=$SyncOptions" --include-from include "
+              fi
+              ## проверим опции копирования для этого хоста
+              if [ -n SpeedLimit.$Alias ]; then
+                 SyncOptions=$SyncOptions" --bwlimit "SpeedLimit.$Alias
+              elif [ -n SpeedLimit ]; then
+                 SyncOptions=$SyncOptions" --bwlimit "SpeedLimit
               fi
               # 
               # измерим размер папочки с имеющимся архивом (без учета бэкапов) до начала архивации. ХЗ зачем.
@@ -294,9 +291,15 @@ do
               #              
               echo Поехали! RSYNC $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current >$LogPrefix/StationRSync.$IP
               cat include                                                               >>$LogPrefix/StationRSync.$IP
+              ####################
+              #                  #
+              ####################
               rsync $SyncOptions $MountPath/$Alias/ $ArchiveRoot/$Current               >>$LogPrefix/StationRSync.$IP 2>&1
               Code=$?
               if [ $Code -ne 0 ]; then echo `date` Ошибка Rsync code is $Code!          >>$LogPrefix/StationBadRSync.$Alias ; fi
+              ####################
+              #                  #
+              ####################
               #
               # и теперь не забыть все размонтировать!
               mount | grep -i $MountPath | while read mountline
@@ -426,4 +429,14 @@ fi
          rm -rf $WatchedDir/$OlderFile
          DirCnt=`ls -1 $WatchedDir | wc -l`
    done
+########################################
+   # настало время разобраться с архивами
+   if [ -n $LastBackupsCount ]; then
+      WatchedDir=$BackupPath/$Alias
+      
+   fi
+   # проверим свободное место и если его мало - пошлем письмо
+   if [ -n $MinFreeSpace ]; then
+      printf "Свободное место "$StopFree | /usr/sbin/ssmtp adkins@nwgsm.ru -f TotalBackup
+   fi
 ########################################
