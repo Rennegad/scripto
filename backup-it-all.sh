@@ -375,18 +375,6 @@ do
               if [ -f include ];then rm include; fi
               #
               ######
-              # это первый архив за месяц ? сохраним его отдельно
-              Mask=`date +%Y`-`date +%m`
-              MontCnt=`ls $BackupPath/$Alias | grep $Mask | wc -l`
-              if [ $MonthCnt=1 ]; then
-                 ThisMonthPath=`ls $BackupPath/$Alias | grep $Mask `
-                 echo ThisMonthPath $ThisMonthPath >>$LogPrefix/StationParse.$IP                 
-                 if [ ! -d $BackupPath/$Alias/Monthly-$Mask ]; then
-                    echo cp $BackupPath/$Alias/$ThisMonthPath $BackupPath/$Alias/Monthly-$Mask >>$LogPrefix/StationParse.$IP
-                    cp -r $BackupPath/$Alias/$ThisMonthPath $BackupPath/$Alias/Monthly-$Mask
-                 fi
-              fi
-              #
               # настало время разобраться с архивами
               # сначала заархивируем самый свежий бакап
               LastBackup=`ls $BackupPath/$Alias | grep ^20 |tail -1`
@@ -406,23 +394,30 @@ do
                     mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup
                  fi
               fi         
-              # теперь оставим только нужное количество бэкапов
+              # это первый архив за месяц? сохраним его отдельно
+              Mask=`date +%Y`-`date +%m`
+              if [ ! -d $BackupPath/$Alias/Monthly-$Mask ]; then
+                 echo cp $BackupPath/$Alias/$LastBackup $BackupPath/$Alias/Monthly-$Mask >>$LogPrefix/StationParse.$IP
+                 cp -r $BackupPath/$Alias/$ThisMonthPath $BackupPath/$Alias/Monthly-$Mask                 
+              fi              
+              # ну теперь оставим только нужное количество бэкапов
               if [ -n $LastBackupsCount ]; then
                  echo это я когда нибуль потом сделаю
               fi
-              #
+              # позаботимся о свободном месте 
               if [ -n $MinFreeSpace ]; then
                  # наконец проверим свободное место и если его мало - пошлем письмо и удалим старые бакапы
                  FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
-                 printf "так. Свободное место "$FreeSpace", а нам надо"$MinFreeSpace  | /usr/sbin/ssmtp adkins@nwgsm.ru -f TotalBackup
+                 echo "так. Свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP
                  # удалим самые старые бакапы
                  while [ $FreeSpace -lt $MinFreeSpace ]; do
                        OlderDir=`ls -1 -t $BackupPath/$Alias | grep ^20 | tail -1`
                        echo 'Эээээй, нужно удалить старый бакап '$BackupPath/$Alias/$OlderDir
                        rm -r $BackupPath/$Alias/$OlderDir
                        FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
+                       echo $OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                       
                  done
-                 printf "теперь свободное место "$StopFree | /usr/sbin/ssmtp adkins@nwgsm.ru -f TotalBackup
+                 printf "теперь свободное место "$StopFree >>$LogPrefix/StationParse.$IP
               fi
               ########################################
            else
