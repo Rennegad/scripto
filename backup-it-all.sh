@@ -380,8 +380,9 @@ do
               MontCnt=`ls $BackupPath/$Alias | grep $Mask | wc -l`
               if [ $MonthCnt=1 ]; then
                  ThisMonthPath=`ls $BackupPath/$Alias | grep $Mask `
+                 echo ThisMonthPath $ThisMonthPath >>$LogPrefix/StationParse.$IP                 
                  if [ ! -d $BackupPath/$Alias/Monthly-$Mask ]; then
-                    echo cp $BackupPath/$Alias/$ThisMonthPath $BackupPath/$Alias/Monthly-$Mask
+                    echo cp $BackupPath/$Alias/$ThisMonthPath $BackupPath/$Alias/Monthly-$Mask >>$LogPrefix/StationParse.$IP
                     cp -r $BackupPath/$Alias/$ThisMonthPath $BackupPath/$Alias/Monthly-$Mask
                  fi
               fi
@@ -396,7 +397,7 @@ do
                  fi
                  StartTime=$(date +%s)
                  7z a -r -mx1 $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup 
-                 echo  $(($(date +%s)-$StartTime))'секунд для '$Alias-$LastBackup.7z >>time.log
+                 echo  $(($(date +%s)-$StartTime))'секунд для '$Alias-$LastBackup.7z >>$LogPrefix/StationParse.$IP                 
                  # 
                  if [ -e $BackupPath/$Alias/$Alias-$LastBackup.7z ]; then
                     # теперь надо удалить все, кроме самого архива конечно
