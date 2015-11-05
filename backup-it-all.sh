@@ -397,8 +397,9 @@ do
               # это первый архив за месяц? сохраним его отдельно
               Mask=`date +%Y`-`date +%m`
               if [ ! -d $BackupPath/$Alias/Monthly-$Mask ]; then
+                 mkdir $BackupPath/$Alias/Monthly-$Mask
                  echo cp $BackupPath/$Alias/$LastBackup $BackupPath/$Alias/Monthly-$Mask >>$LogPrefix/StationParse.$IP
-                 cp -r $BackupPath/$Alias/$ThisMonthPath $BackupPath/$Alias/Monthly-$Mask                 
+                 cp -r   $BackupPath/$Alias/$LastBackup $BackupPath/$Alias/Monthly-$Mask/
               fi              
               # ну теперь оставим только нужное количество бэкапов
               if [ -n $LastBackupsCount ]; then
