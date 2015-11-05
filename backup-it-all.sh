@@ -394,43 +394,16 @@ do
                  if [ $Is7Z -eq 0 ]; then
                     apt-get install p7zip-full -y
                  fi
-                 #StartTime=$(date +%s)        
-                 #7z a -r -mx0 $BackupPath/$Alias/$Alias-$LastBackup-0.7z $BackupPath/$Alias/$LastBackup 
-                 #echo  $(($(date +%s)-$StartTime)) >time.log
                  StartTime=$(date +%s)
-                 7z a -r -mx1 $BackupPath/$Alias/$Alias-$LastBackup-1.7z $BackupPath/$Alias/$LastBackup 
-                 echo  $(($(date +%s)-$StartTime))'секунд для '$Alias-$LastBackup-1.7z >>time.log
-                 #StartTime=$(date +%s)                 
-                 #7z a -r -mx2 $BackupPath/$Alias/$Alias-$LastBackup-2.7z $BackupPath/$Alias/$LastBackup 
-                 #echo  $(($(date +%s)-$StartTime)) >>time.log
-                 #StartTime=$(date +%s)                 
-                 #7z a -r -mx3 $BackupPath/$Alias/$Alias-$LastBackup-3.7z $BackupPath/$Alias/$LastBackup 
-                 #echo  $(($(date +%s)-$StartTime)) >>time.log
-                 #StartTime=$(date +%s)                 
-                 #7z a -r -mx4 $BackupPath/$Alias/$Alias-$LastBackup-4.7z $BackupPath/$Alias/$LastBackup 
-                 #echo  $(($(date +%s)-$StartTime)) >>time.log
-                 #StartTime=$(date +%s)                 
-                 #7z a -r -mx5 $BackupPath/$Alias/$Alias-$LastBackup-5.7z $BackupPath/$Alias/$LastBackup 
-                 #echo  $(($(date +%s)-$StartTime)) >>time.log
-                 #StartTime=$(date +%s)                 
-                 #7z a -r -mx6 $BackupPath/$Alias/$Alias-$LastBackup-6.7z $BackupPath/$Alias/$LastBackup 
-                 #echo  $(($(date +%s)-$StartTime)) >>time.log
-                 #StartTime=$(date +%s)                 
-                 #7z a -r -mx7 $BackupPath/$Alias/$Alias-$LastBackup-7.7z $BackupPath/$Alias/$LastBackup 
-                 #echo  $(($(date +%s)-$StartTime)) >>time.log
-                 #StartTime=$(date +%s)                 
-                 #7z a -r -mx8 $BackupPath/$Alias/$Alias-$LastBackup-8.7z $BackupPath/$Alias/$LastBackup 
-                 #echo  $(($(date +%s)-$StartTime)) >>time.log
-                 #StartTime=$(date +%s)                 
-                 #7z a -r -mx9 $BackupPath/$Alias/$Alias-$LastBackup-9.7z $BackupPath/$Alias/$LastBackup 
-                 #echo  $(($(date +%s)-$StartTime)) >>time.log
-                 
-                 #if [ -e $BackupPath/$Alias/$Alias-$LastBackup.7z ]; then
-                 #   # теперь надо удалить все, кроме самого архива конечно
-                 #   rm -r $BackupPath/$Alias/$LastBackup
-                 #   mkdir $BackupPath/$Alias/$LastBackup
-                 #   mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup
-                 #fi
+                 7z a -r -mx1 $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup 
+                 echo  $(($(date +%s)-$StartTime))'секунд для '$Alias-$LastBackup.7z >>time.log
+                 # 
+                 if [ -e $BackupPath/$Alias/$Alias-$LastBackup.7z ]; then
+                    # теперь надо удалить все, кроме самого архива конечно
+                    rm -r $BackupPath/$Alias/$LastBackup
+                    mkdir $BackupPath/$Alias/$LastBackup
+                    mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup
+                 fi
               fi         
               # теперь оставим только нужное количество бэкапов
               if [ -n $LastBackupsCount ]; then
