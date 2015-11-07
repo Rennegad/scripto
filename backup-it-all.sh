@@ -353,7 +353,6 @@ do
                 BackupShareSize=$((BackupShareStopSize - BackupShareStartSize[$I]))
                 BackupShareSizeF=$(printf "%'.0d" $BackupShareSize)                
                 echo '['"${Spac:0:$((MaxShareLen+1-${#ShareNames[$I]}))}"${ShareNames[$I]}':'"${Spac:0:$((MaxSize1Len+1-${#ShareSizeF[$I]}))}"${ShareSizeF[$I]}':'"${Spac:0:$((MaxSize2Len+1-${#BackupShareStartSizeF[$I]}))}"${BackupShareStartSizeF[$I]}':'"${Spac:$Width3+${#BackupShareStopSizeF}}"$BackupShareStopSizeF':'$BackupShareSizeF"${Spac:$Width8+${#BackupShareSizeF}}"']' >>shares.lst
-                cat shares.lst >>$LogPrefix/StationParse.$IP
                 if [ $I -eq 1 ]; then echo Shares on $Alias $IP >>AllShares.lst; fi
                  # теперь надо бы посчитать в каждой шаре фавйлы по маскам
                 #if [ -f include ]; then 
@@ -371,6 +370,7 @@ do
                 #   done < include
                 #fi   
               done              
+              cat shares.lst >>$LogPrefix/StationParse.$IP
               cat shares.lst >>AllShares.lst
               if [ -f include ];then rm include; fi
               #
