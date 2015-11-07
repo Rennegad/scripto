@@ -418,7 +418,6 @@ do
                        FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
                        echo $OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                       
                  done
-                 printf "теперь свободное место "$StopFree >>$LogPrefix/StationParse.$IP
               fi
               ########################################
            else
