@@ -275,7 +275,7 @@ do
                  SyncOptions=$SyncOptions" --include-from include "
               fi
               ## проверим опции копирования для этого хоста
-              if [ -n SpeedLimit ]; then
+              if [[ -n $SpeedLimit ]]; then
                  SyncOptions=$SyncOptions" --bwlimit "$SpeedLimit
               fi
               # 
