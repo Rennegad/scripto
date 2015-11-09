@@ -378,6 +378,7 @@ do
               # настало время разобраться с архивами
               # сначала заархивируем самый свежий бакап
               LastBackup=`ls $BackupPath/$Alias | grep ^20 |tail -1`
+              echo LastBackup is $LastBackup >>$LogPrefix/StationParse.$IP                 
               if [ ! -e $BackupPath/$Alias/$LastBackup/$Alias-$LastBackup.7z ]; then 
                  Is7Z=`dpkg -l | grep p7zip | wc -l`
                  if [ $Is7Z -eq 0 ]; then
@@ -397,6 +398,7 @@ do
               # это первый архив за месяц? сохраним его отдельно
               Mask=`date +%Y`-`date +%m`
               if [ ! -d $BackupPath/$Alias/Monthly-$Mask ]; then
+                 echo First in Month $Mask  >>$LogPrefix/StationParse.$IP                 
                  mkdir $BackupPath/$Alias/Monthly-$Mask
                  echo cp $BackupPath/$Alias/$LastBackup $BackupPath/$Alias/Monthly-$Mask >>$LogPrefix/StationParse.$IP
                  cp -r   $BackupPath/$Alias/$LastBackup $BackupPath/$Alias/Monthly-$Mask/
