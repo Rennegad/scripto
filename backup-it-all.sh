@@ -386,13 +386,15 @@ do
                  fi
                  StartTime=$(date +%s)
                  7z a -r -mx1 $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup 
-                 echo  $(($(date +%s)-$StartTime))'секунд для '$Alias-$LastBackup.7z >>$LogPrefix/StationParse.$IP                 
+                 echo  $(($(date +%s)-$StartTime))' секунд для '$Alias-$LastBackup.7z >>$LogPrefix/StationParse.$IP                 
                  # 
                  if [ -e $BackupPath/$Alias/$Alias-$LastBackup.7z ]; then
                     # теперь надо удалить все, кроме самого архива конечно
-                    rm -r $BackupPath/$Alias/$LastBackup
-                    mkdir $BackupPath/$Alias/$LastBackup
-                    mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup
+                    echo 'удалим '$BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
+                    rm -r $BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
+                    echo 'Удалили с кодом '$?', создадим заново '>>$LogPrefix/StationParse.$IP                 
+                    mkdir $BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
+                    mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup 
                  fi
               fi         
               # это первый архив за месяц? сохраним его отдельно
