@@ -422,6 +422,8 @@ do
                        FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
                        echo $OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                       
                  done
+                 ## если все еще мало места - надо удалять Monthly
+                 
               fi
               ########################################
            else
