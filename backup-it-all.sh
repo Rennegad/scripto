@@ -385,7 +385,7 @@ do
                     apt-get install p7zip-full -y
                  fi
                  StartTime=$(date +%s)
-                 7z a -r -mx1 $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup 
+                 7z a -r -mx1 $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$Current
                  echo  $(($(date +%s)-$StartTime))' секунд для '$Alias-$LastBackup.7z >>$LogPrefix/StationParse.$IP                 
                  # 
                  if [ -e $BackupPath/$Alias/$Alias-$LastBackup.7z ]; then
