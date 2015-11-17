@@ -399,6 +399,7 @@ do
               fi         
               # В этом месяце бэкапов еще не было ?
               Mask=`date +%Y`-`date +%m`
+              if [ -n $LastMonths ];then
               if [ ! -e $BackupPath/$Alias/Monthly/$Alias-$Mask.7z ]; then
                  if [ ! -d $BackupPath/$Alias/Monthly ];then
                     mkdir $BackupPath/$Alias/Monthly                 
@@ -406,9 +407,10 @@ do
                  echo First backup in Month $Mask  >>$LogPrefix/StationParse.$IP
                  echo  7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current >>$LogPrefix/StationParse.$IP
                  StartTime=$(date +%s)
-                 #7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current
+                 7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current
                  echo  $(($(date +%s)-$StartTime))' секунд для Monthly/'$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
               fi              
+              fi
               # ну теперь оставим только нужное количество бэкапов
               if [ -n $LastBackupsCount ]; then
                  echo это я когда нибуль потом сделаю
