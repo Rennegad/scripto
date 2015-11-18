@@ -93,10 +93,10 @@ Current=files
 # все на месте ? тогда поехали
 
 #вычислим размер папки с архивами ДО архивирования
-StartSize=`du $BackupPath -s -b|cut -d/ -f1`
+[ ! $NoSummary -eq 1 ] && StartSize=`du $BackupPath -s -b|cut -d/ -f1`
 StartSizeF=$(printf "%'.0d" $StartSize)
 #свободное место ДО архивирования
-StartFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
+[ ! $NoSummary -eq 1 ] && StartFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
 StartFreeF=$(printf "%'.0d" $StartFree)
 
 echo So, lets do it now                                                                                                                                                                            >$log
@@ -430,7 +430,7 @@ do
                        echo 'Эээээй, нужно удалить старый бакап '$BackupPath/$Alias/$OlderDir
                        rm -r $BackupPath/$Alias/$OlderDir
                        FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
-                       echo $OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                       
+                       echo $BackupPath/$Alias/$OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                       
                  done
                  ## если все еще мало места - надо удалять Monthly
                  
@@ -450,12 +450,12 @@ StopTimeF=$(date +"%d-%m-%y %T")
 Time=$((StopTime-StartTime))
 TimeF=$(printf "%'.0d" $Time)
 #
-StopSize=`du $BackupPath -s -b|cut -d/ -f1`
+[ ! $NoSummary -eq 1 ] && StopSize=`du $BackupPath -s -b|cut -d/ -f1`
 StopSizeF=$(printf "%'.0d" $StopSize)
 Size=$((StopSize-StartSize))
 SizeF=$(printf "%'.0d" $Size)
 #свободное место ПОСЛЕ архивирования
-StopFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
+[ ! $NoSummary -eq 1 ] && StopFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
 StopFreeF=$(printf "%'.0d" $StopFree)
 #
 Col2=$HostLive'/'$HostCount
