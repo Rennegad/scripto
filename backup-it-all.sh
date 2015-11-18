@@ -377,39 +377,43 @@ do
               ######
               # настало время разобраться с архивами
               # сначала заархивируем самый свежий бакап
-              LastBackup=`ls $BackupPath/$Alias | grep ^20 |tail -1`
-              echo LastBackup is $LastBackup >>$LogPrefix/StationParse.$IP                 
-              if [ ! -e $BackupPath/$Alias/$LastBackup/$Alias-$LastBackup.7z ]; then 
-                 Is7Z=`which  p7zip | wc -l`
-                 if [ $Is7Z -eq 0 ]; then
-                    apt-get install p7zip-full -y
-                 fi
-                 StartTime=$(date +%s)
-                 7z a -r -mx1 $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup
-                 echo  $(($(date +%s)-$StartTime))' секунд для '$Alias-$LastBackup.7z >>$LogPrefix/StationParse.$IP                 
-                 # 
-                 if [ -e $BackupPath/$Alias/$Alias-$LastBackup.7z ]; then
-                    # теперь надо удалить все, кроме самого архива конечно
-                    echo 'удалим '$BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
-                    rm -r $BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
-                    echo 'Удалили с кодом '$?', создадим заново '>>$LogPrefix/StationParse.$IP                 
-                    mkdir $BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
-                    mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup 
-                 fi
-              fi         
-              # В этом месяце бэкапов еще не было ?
-              Mask=`date +%Y`-`date +%m`
-              if [ -n $LastMonths ];then
-              if [ ! -e $BackupPath/$Alias/Monthly/$Alias-$Mask.7z ]; then
-                 if [ ! -d $BackupPath/$Alias/Monthly ];then
-                    mkdir $BackupPath/$Alias/Monthly                 
-                 fi
-                 echo First backup in Month $Mask  >>$LogPrefix/StationParse.$IP
-                 echo  7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current >>$LogPrefix/StationParse.$IP
-                 StartTime=$(date +%s)
-                 7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current
-                 echo  $(($(date +%s)-$StartTime))' секунд для Monthly/'$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
-              fi              
+              LactBackupCnt=`ls $BackupPath/$Alias | grep ^20 | wc -l`
+              if  [ ! $LastBackupCnt -eq 1 ]; then
+                  LastBackup=`ls $BackupPath/$Alias | grep ^20 |tail -1`
+                  # если он конечно есть
+                  echo LastBackup is $LastBackup >>$LogPrefix/StationParse.$IP                 
+                  if [ ! -e $BackupPath/$Alias/$LastBackup/$Alias-$LastBackup.7z ]; then 
+                     Is7Z=`which  p7zip | wc -l`
+                     if [ $Is7Z -eq 0 ]; then
+                        apt-get install p7zip-full -y
+                     fi
+                     StartTime=$(date +%s)
+                     7z a -r -mx1 $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup
+                     echo  $(($(date +%s)-$StartTime))' секунд для '$Alias-$LastBackup.7z >>$LogPrefix/StationParse.$IP                 
+                     # 
+                     if [ -e $BackupPath/$Alias/$Alias-$LastBackup.7z ]; then
+                        # теперь надо удалить все, кроме самого архива конечно
+                        echo 'удалим '$BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
+                        rm -r $BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
+                        echo 'Удалили с кодом '$?', создадим заново '>>$LogPrefix/StationParse.$IP                 
+                        mkdir $BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
+                        mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup 
+                     fi                       
+                  fi              
+                  # В этом месяце бэкапов еще не было ?
+                  Mask=`date +%Y`-`date +%m`
+                  if [ -n $LastMonths ];then
+                     if [ ! -e $BackupPath/$Alias/Monthly/$Alias-$Mask.7z ]; then
+                        if [ ! -d $BackupPath/$Alias/Monthly ];then
+                           mkdir $BackupPath/$Alias/Monthly                 
+                        fi
+                        echo First backup in Month $Mask  >>$LogPrefix/StationParse.$IP
+                        echo  7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current >>$LogPrefix/StationParse.$IP
+                        StartTime=$(date +%s)
+                        7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current
+                        echo  $(($(date +%s)-$StartTime))' секунд для Monthly/'$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
+                     fi              
+                  fi
               fi
               # ну теперь оставим только нужное количество бэкапов
               if [ -n $LastBackupsCount ]; then
