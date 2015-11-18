@@ -85,6 +85,7 @@ if [ ! -d $BackupPath ]; then
    exit
 fi
 
+[ $NoSummary -eq 1 ] && echo NoSummary flag is on. Ok then >>$log
 ####################################################################################
 IncrementDir=`date +%Y-%m-%d`
 Current=files
