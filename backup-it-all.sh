@@ -231,8 +231,8 @@ do
                mount "//$IP/$ShareName" "$MountPath/$Alias/$Share_Name" -o user=$User,password=$Password,iocharset=utf8,ro >>$LogPrefix/StationParse.$IP 2>&1
                Code=$?
                echo Код монтирования $Code >>$LogPrefix/StationParse.$IP
-               MountSize=$(du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1)
-               BackupSize=$(du $BackupPath/$Alias/$Current/$Share_Name -s -b|cut -d/ -f1)
+               [ ! $NoSummary -eq 1 ] && MountSize=$(du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1)
+               [ ! $NoSummary -eq 1 ] && BackupSize=$(du $BackupPath/$Alias/$Current/$Share_Name -s -b|cut -d/ -f1)
                if [[ $Code -eq 0 ]];  then
                   ShareLive=$((ShareLive+1))
                   ShareNames[$ShareLive]=${Share_Name:0:-$Width1}
@@ -281,7 +281,7 @@ do
               # 
               # измерим размер папочки с имеющимся архивом (без учета бэкапов) до начала архивации. ХЗ зачем.
               if [ -d $BackupPath/$Alias/$Current ]; then
-                 hostStartSize=$(du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1) 
+                 [ ! $NoSummary -eq 1 ] && hostStartSize=$(du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1) 
                  hostStartSizeF=$(printf "%'.0d" $hostStartSize)
               fi
               ########## http://wiki.dieg.info/rsync
@@ -313,7 +313,7 @@ do
               hostTime=$((hostStopTime-hostStartTime))
               hostTimeF=$(printf "%'.0d" $hostTime)
               #
-              hostStopSize=$(du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1)
+              [ ! $NoSummary -eq 1 ] && hostStopSize=$(du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1)
               hostStopSizeF=$(printf "%'.0d" $hostStopSize)
               #
               hostSize=$((hostStopSize-hostStartSize))
@@ -348,7 +348,7 @@ do
               fi
               for I in `seq 1 $ShareLive`
               do
-                BackupShareStopSize=$(du $BackupPath/$Alias/$Current/${ShareNames[$I]} -s -b|cut -d/ -f1)
+                [ ! $NoSummary -eq 1 ] && BackupShareStopSize=$(du $BackupPath/$Alias/$Current/${ShareNames[$I]} -s -b|cut -d/ -f1)
                 BackupShareStopSizeF=$(printf "%'.0d" $BackupShareStopSize)    
                 BackupShareSize=$((BackupShareStopSize - BackupShareStartSize[$I]))
                 BackupShareSizeF=$(printf "%'.0d" $BackupShareSize)                
