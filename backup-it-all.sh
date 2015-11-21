@@ -264,7 +264,7 @@ do
            if [[ $ShareLive -gt 0 ]]; then
               #
               ArchiveRoot=$BackupPath/$Alias
-              SyncOptions="-avr -d --force --ignore-errors --delete --delete-excluded --backup --backup-dir=$ArchiveRoot/$IncrementDir -h --log-file=$LogPrefix/rsync-$Alias.log"
+              SyncOptions="-avr -d --force --ignore-errors --delete --delete-excluded --prune-empty-dirs --backup --backup-dir=$ArchiveRoot/$IncrementDir -h --log-file=$LogPrefix/rsync-$Alias.log"
               ## проверим, есть ли условия фильтрации
               if [ -f include.$Alias ]; then
                  # !!!! елки палки!! http://superuser.com/questions/256751/make-rsync-case-insensitive
@@ -379,7 +379,7 @@ do
               # настало время разобраться с архивами
               # сначала заархивируем самый свежий бакап
               LactBackupCnt=`ls $BackupPath/$Alias | grep ^20 | wc -l`
-              if  [ $LastBackupCnt -ne 0 ]; then
+              if  [[ $LastBackupCnt -ne 0 ]]; then
                   LastBackup=`ls $BackupPath/$Alias | grep ^20 |tail -1`
                   # если он конечно есть
                   echo LastBackup is $LastBackup >>$LogPrefix/StationParse.$IP                 
