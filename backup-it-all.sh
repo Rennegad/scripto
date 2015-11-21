@@ -428,13 +428,18 @@ do
                  # удалим самые старые бакапы
                  while [ $FreeSpace -lt $MinFreeSpace ]; do
                        OlderDir=`ls -1 -t $BackupPath/$Alias | grep ^20 | tail -1`
-                       echo 'Эээээй, нужно удалить старый бакап '$BackupPath/$Alias/$OlderDir
-                       rm -r $BackupPath/$Alias/$OlderDir
-                       FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
-                       echo $BackupPath/$Alias/$OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                       
+                       if [ ! ${#OlderDir} -eq 0 ]; then
+                          echo 'Эээээй, нужно удалить старый бакап '$BackupPath/$Alias/$OlderDir
+                          rm -r $BackupPath/$Alias/$OlderDir
+                          FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
+                          echo $BackupPath/$Alias/$OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                                                
+                       else
+                          echo 'cтарых бакапов нет, нечего удалять, чтобы освободить место '$BackupPath/$Alias/$OlderDir
+                          break
+                       fi
                  done
-                 ## если все еще мало места - надо удалять Monthly
-                 
+                 ## если все еще мало места - надо удалять Monthly. если они есть
+                 ##                 
               fi
               ########################################
            else
