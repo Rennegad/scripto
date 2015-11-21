@@ -379,7 +379,7 @@ do
               # настало время разобраться с архивами
               # сначала заархивируем самый свежий бакап
               LactBackupCnt=`ls $BackupPath/$Alias | grep ^20 | wc -l`
-              if  [ ! $LastBackupCnt -eq 1 ]; then
+              if  [ $LastBackupCnt -ne 0 ]; then
                   LastBackup=`ls $BackupPath/$Alias | grep ^20 |tail -1`
                   # если он конечно есть
                   echo LastBackup is $LastBackup >>$LogPrefix/StationParse.$IP                 
@@ -400,7 +400,7 @@ do
                         mkdir $BackupPath/$Alias/$LastBackup >>$LogPrefix/StationParse.$IP                 
                         mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup 
                      fi                       
-                  fi              
+                  fi                                
                   # В этом месяце бэкапов еще не было ?
                   Mask=`date +%Y`-`date +%m`
                   if [ ! -z $LastMonths ];then
