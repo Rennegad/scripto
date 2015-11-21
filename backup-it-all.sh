@@ -429,7 +429,7 @@ do
                  while [ $FreeSpace -lt $MinFreeSpace ]; do
                        OlderDir=`ls -1 -t $BackupPath/$Alias | grep ^20 | tail -1`
                        if [ ! ${#OlderDir} -eq 0 ]; then
-                          echo 'Эээээй, нужно удалить старый бакап '$BackupPath/$Alias/$OlderDir
+                          echo 'Эээээй, нужно удалить старый бакап '$BackupPath/$Alias/$OlderDir >>$LogPrefix/StationParse.$IP
                           rm -r $BackupPath/$Alias/$OlderDir
                           FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
                           echo $BackupPath/$Alias/$OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                                                
