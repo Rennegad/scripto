@@ -276,7 +276,7 @@ do
                  SyncOptions=$SyncOptions" --include-from include "
               fi
               ## проверим опции копирования для этого хоста
-              if [[ -n $SpeedLimit ]]; then
+              if [[ ! -z $SpeedLimit ]]; then
                  SyncOptions=$SyncOptions" --bwlimit "$SpeedLimit
               fi
               # 
@@ -403,7 +403,7 @@ do
                   fi              
                   # В этом месяце бэкапов еще не было ?
                   Mask=`date +%Y`-`date +%m`
-                  if [ -n $LastMonths ];then
+                  if [ ! -z $LastMonths ];then
                      if [ ! -e $BackupPath/$Alias/Monthly/$Alias-$Mask.7z ]; then
                         if [ ! -d $BackupPath/$Alias/Monthly ];then
                            mkdir $BackupPath/$Alias/Monthly                 
@@ -417,11 +417,11 @@ do
                   fi
               fi
               # ну теперь оставим только нужное количество бэкапов
-              if [ -n $LastBackupsCount ]; then
+              if [ ! -z $LastBackupsCount ]; then
                  echo это я когда нибуль потом сделаю
               fi
               # позаботимся о свободном месте 
-              if [ -n $MinFreeSpace ]; then
+              if [ ! -z $MinFreeSpace ]; then
                  # наконец проверим свободное место и если его мало - пошлем письмо и удалим старые бакапы
                  FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
                  echo "так. Свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP
