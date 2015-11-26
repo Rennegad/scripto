@@ -379,7 +379,8 @@ do
               # настало время разобраться с архивами
               # сначала заархивируем самый свежий бакап
               LactBackupCnt=`ls $BackupPath/$Alias | grep ^20 | wc -l`
-              if  [[ $LastBackupCnt -ne 0 ]]; then
+              echo LastBackup is [$LastBackupCnt] >>$LogPrefix/StationParse.$IP                 
+              if  [ $LastBackupCnt -ne 0 ]; then
                   LastBackup=`ls $BackupPath/$Alias | grep ^20 |tail -1`
                   # если он конечно есть
                   echo LastBackup is $LastBackup >>$LogPrefix/StationParse.$IP                 
