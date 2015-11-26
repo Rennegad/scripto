@@ -379,11 +379,10 @@ do
               # настало время разобраться с архивами
               # сначала заархивируем самый свежий бакап
               LactBackupCnt=`ls $BackupPath/$Alias | grep ^20 | wc -l`
-              echo LastBackup is [$LastBackupCnt] >>$LogPrefix/StationParse.$IP                 
               if  [ $LastBackupCnt -ne 0 ]; then
                   LastBackup=`ls $BackupPath/$Alias | grep ^20 |tail -1`
                   # если он конечно есть
-                  echo LastBackup is $LastBackup >>$LogPrefix/StationParse.$IP                 
+                  echo LastBackup is $LastBackup/$LastBackupCnt >>$LogPrefix/StationParse.$IP                 
                   if [ ! -e $BackupPath/$Alias/$LastBackup/$Alias-$LastBackup.7z ]; then 
                      Is7Z=`which  p7zip | wc -l`
                      if [ $Is7Z -eq 0 ]; then
@@ -416,6 +415,8 @@ do
                         echo  $(($(date +%s)-$StartTime))' секунд для Monthly/'$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
                      fi              
                   fi
+              else
+                 echo LastBackupCnt is [$LastBackupCnt]... >>$LogPrefix/StationParse.$IP        
               fi
               # ну теперь оставим только нужное количество бэкапов
               if [ ! -z $LastBackupsCount ]; then
