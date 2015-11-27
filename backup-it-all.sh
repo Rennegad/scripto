@@ -416,7 +416,7 @@ do
                      fi              
                   fi
               else
-                 echo LastBackupCnt is [$LastBackupCnt]... >>$LogPrefix/StationParse.$IP        
+                 echo LastBackupCnt of $BackupPath/$Alias : grep ^20 is [$LastBackupCnt]... >>$LogPrefix/StationParse.$IP        
               fi
               # ну теперь оставим только нужное количество бэкапов
               if [ ! -z $LastBackupsCount ]; then
