@@ -409,10 +409,15 @@ do
                            mkdir $BackupPath/$Alias/Monthly                 
                         fi
                         echo First backup in Month $Mask  >>$LogPrefix/StationParse.$IP
+                        monFilesSize=`du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1`
+                        monFilesSizeF=$(printf "%'.0d" $FilesSize)
+                        monFreeSize=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
+                        monFreeSizeF=$(printf "%'.0d" $FreeSize)
+                        echo размер $BackupPath/$Alias/$Current  - $monFilesSizeF, свободное место под архив - $monFreeSizeF >>$LogPrefix/StationParse.$IP
                         echo  7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current >>$LogPrefix/StationParse.$IP
                         StartTime=$(date +%s)
                         7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current
-                        echo  $(($(date +%s)-$StartTime))' секунд для Monthly/'$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
+                        echo 7z код $?, прошло $(($(date +%s)-$StartTime)) секунд для $Alias/Monthly/$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
                      fi              
                   fi
               else
