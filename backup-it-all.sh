@@ -438,18 +438,22 @@ do
                        mkdir $BackupPath/$Alias/Monthly                 
                     fi
                     echo Wow, First backup in Month $Mask  >>$LogPrefix/StationParse.$IP
-                    monFilesSize=`du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1`
+                    monFilesSize=`du $BackupPath/$Alias/$Current -s -b | awk '{print $1}'`
                     monFilesSizeF=$(printf "%'.0d" $monFilesSize)
-                    monFreeSize=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
+                    monFreeSize=`df $BackupPath --block-size=1 | tail -n 1 | awk '{print $4}'`
                     monFreeSizeF=$(printf "%'.0d" $monFreeSize)
                     echo размер $BackupPath/$Alias/$Current  - $monFilesSizeF, свободное место под архив - $monFreeSizeF >>$LogPrefix/StationParse.$IP
-                    echo  7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current >>$LogPrefix/StationParse.$IP
-                    StartTime=$(date +%s)
-                    7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current                        
-                    echo 7z код $?, прошло $(($(date +%s)-$StartTime)) секунд для $Alias/Monthly/$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
-                    monFreeSize=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
-                    monFreeSizeF=$(printf "%'.0d" $monFreeSize)
-                    echo и теперь свободное место - $monFreeSize >>$LogPrefix/StationParse.$IP                 
+                    if [ $monFilesSize -lt $monFreeSize ]; then 
+                       echo  7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current >>$LogPrefix/StationParse.$IP
+                       StartTime=$(date +%s)
+                       7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current                        
+                       echo 7z код $?, прошло $(($(date +%s)-$StartTime)) секунд для $Alias/Monthly/$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
+                       monFreeSize=`df $BackupPath --block-size=1 |tail -n 1 | awk '{print $4}'`
+                       monFreeSizeF=$(printf "%'.0d" $monFreeSize)
+                       echo и теперь свободное место - $monFreeSize >>$LogPrefix/StationParse.$IP                 
+                    else
+                       echo Alarm!!!1 не хватает места под месячный архив! >>$LogPrefix/StationParse.$IP
+                    fi   
                     # нужно оставить только LastMonths количество копий 
                 fi
               fi
