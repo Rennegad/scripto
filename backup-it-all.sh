@@ -401,25 +401,6 @@ do
                         mv $BackupPath/$Alias/$Alias-$LastBackup.7z $BackupPath/$Alias/$LastBackup 
                      fi                       
                   fi                                
-                  # В этом месяце бэкапов еще не было ?
-                  Mask=`date +%Y`-`date +%m`
-                  if [ ! -z $LastMonths ];then
-                     if [ ! -e $BackupPath/$Alias/Monthly/$Alias-$Mask.7z ]; then
-                        if [ ! -d $BackupPath/$Alias/Monthly ];then
-                           mkdir $BackupPath/$Alias/Monthly                 
-                        fi
-                        echo First backup in Month $Mask  >>$LogPrefix/StationParse.$IP
-                        monFilesSize=`du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1`
-                        monFilesSizeF=$(printf "%'.0d" $monFilesSize)
-                        monFreeSize=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
-                        monFreeSizeF=$(printf "%'.0d" $monFreeSize)
-                        echo размер $BackupPath/$Alias/$Current  - $monFilesSizeF, свободное место под архив - $monFreeSizeF >>$LogPrefix/StationParse.$IP
-                        echo  7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current >>$LogPrefix/StationParse.$IP
-                        StartTime=$(date +%s)
-                        7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current
-                        echo 7z код $?, прошло $(($(date +%s)-$StartTime)) секунд для $Alias/Monthly/$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
-                     fi              
-                  fi
               else
                  echo LastBackupCnt of $BackupPath/$Alias : grep ^20 is [$LastBackupCnt]... >>$LogPrefix/StationParse.$IP        
               fi
@@ -447,8 +428,31 @@ do
                  done
                  ## если все еще мало места - надо удалять Monthly. если они есть
                  ##                 
-              fi
+              fi              
               ########################################
+              # В этом месяце бэкапов еще не было ?
+              Mask=`date +%Y`-`date +%m`
+              if [ ! -z $LastMonths ];then
+                 if [ ! -e $BackupPath/$Alias/Monthly/$Alias-$Mask.7z ]; then
+                    if [ ! -d $BackupPath/$Alias/Monthly ];then
+                       mkdir $BackupPath/$Alias/Monthly                 
+                    fi
+                    echo Wow, First backup in Month $Mask  >>$LogPrefix/StationParse.$IP
+                    monFilesSize=`du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1`
+                    monFilesSizeF=$(printf "%'.0d" $monFilesSize)
+                    monFreeSize=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
+                    monFreeSizeF=$(printf "%'.0d" $monFreeSize)
+                    echo размер $BackupPath/$Alias/$Current  - $monFilesSizeF, свободное место под архив - $monFreeSizeF >>$LogPrefix/StationParse.$IP
+                    echo  7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current >>$LogPrefix/StationParse.$IP
+                    StartTime=$(date +%s)
+                    7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current                        
+                    echo 7z код $?, прошло $(($(date +%s)-$StartTime)) секунд для $Alias/Monthly/$Alias-$Mask.7z >>$LogPrefix/StationParse.$IP                 
+                    monFreeSize=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`
+                    monFreeSizeF=$(printf "%'.0d" $monFreeSize)
+                    echo и теперь свободное место - $monFreeSize >>$LogPrefix/StationParse.$IP                 
+                    # нужно оставить только LastMonths количество копий 
+                fi
+              fi
            else
               echo Alas, $MountPath/$Alias has no shares, sad but true. Perhaps move it to Blacklist?  >>$LogPrefix/StationParse.$IP
               echo $Alias [$IP] have no opened shares>>$BadLog
