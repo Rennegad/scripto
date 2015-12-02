@@ -443,7 +443,7 @@ do
                     monFreeSize=`df $BackupPath --block-size=1 | tail -n 1 | awk '{print $4}'`
                     monFreeSizeF=$(printf "%'.0d" $monFreeSize)
                     echo размер $BackupPath/$Alias/$Current  - $monFilesSizeF, свободное место под архив - $monFreeSizeF >>$LogPrefix/StationParse.$IP
-                    if [ $monFilesSize -lt $monFreeSize ]; then 
+                    if [ $((monFilesSize/2)) -lt $monFreeSize ]; then 
                        echo  7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current >>$LogPrefix/StationParse.$IP
                        StartTime=$(date +%s)
                        (7z a -r -mx1 $BackupPath/$Alias/Monthly/$Alias-$Mask.7z $BackupPath/$Alias/$Current &)
