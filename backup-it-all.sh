@@ -412,7 +412,7 @@ do
               if [ ! -z $MinFreeSpace ]; then
                  # наконец проверим свободное место и если его мало - пошлем письмо и удалим старые бакапы
                  FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
-                 echo "так. Свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP
+                 echo "так. Свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                 
                  # удалим самые старые бакапы
                  while [ $FreeSpace -lt $MinFreeSpace ]; do
                        OlderDir=`ls -1 -t $BackupPath/$Alias | grep ^20 | tail -1`
@@ -421,6 +421,14 @@ do
                           rm -r $BackupPath/$Alias/$OlderDir
                           FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
                           echo $BackupPath/$Alias/$OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                                                
+                          if [ 1 -z $MinOldBackupCount ]; then 
+                             OldBackupCount=`ls -1 -t $BackupPath/$Alias | grep ^20 | wc -l`
+                             echo "осталось старых бэкапов - "$OldBackupCount", а нам можно оставить "$MinOldBackupCount>>$LogPrefix/StationParse.$IP 
+                             if [ $MinOldBackupCount -eq $OldBackupCount ]; then
+                                echo 'оставим несколько старых бэкапов' >>$LogPrefix/StationParse.$IP 
+                                break
+                             fi
+                          fi     
                        else
                           echo 'cтарых бакапов нет, больше нечего удалять, чтобы освободить место '$BackupPath/$Alias/$OlderDir
                           break
