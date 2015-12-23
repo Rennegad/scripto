@@ -421,7 +421,7 @@ do
                           rm -r $BackupPath/$Alias/$OlderDir
                           FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"`          
                           echo $BackupPath/$Alias/$OlderDir" удален, свободное место "$FreeSpace", а нам надо "$MinFreeSpace >>$LogPrefix/StationParse.$IP                                                
-                          if [ 1 -z $MinOldBackupCount ]; then 
+                          if [ ! -z $MinOldBackupCount ]; then 
                              OldBackupCount=`ls -1 -t $BackupPath/$Alias | grep ^20 | wc -l`
                              echo "осталось старых бэкапов - "$OldBackupCount", а нам можно оставить "$MinOldBackupCount>>$LogPrefix/StationParse.$IP 
                              if [ $MinOldBackupCount -eq $OldBackupCount ]; then
