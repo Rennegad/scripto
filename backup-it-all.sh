@@ -409,6 +409,10 @@ do
                  echo это я когда нибуль потом сделаю
               fi
               # позаботимся о свободном месте 
+              #
+              OldBackupCount=`ls -1 -t $BackupPath/$Alias | grep ^20 | wc -l`
+              echo $BackupPath/$Alias" осталось старых бэкапов - "$OldBackupCount", а нам можно оставить "$MinOldBackupCount>>$LogPrefix/StationParse.$IP 
+              #
               if [ ! -z $MinFreeSpace ]; then
                  # наконец проверим свободное место и если его мало - пошлем письмо и удалим старые бакапы
                  FreeSpace=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
