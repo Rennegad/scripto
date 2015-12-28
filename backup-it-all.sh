@@ -404,14 +404,20 @@ do
               else
                  echo LastBackupCnt of $BackupPath/$Alias : grep ^20 is [$LastBackupCnt]... >>$LogPrefix/StationParse.$IP        
               fi
-              # ну теперь оставим только нужное количество бэкапов
-              if [ ! -z $LastBackupsCount ]; then
-                 echo это я когда нибуль потом сделаю
-              fi
               # позаботимся о свободном месте 
               #
               OldBackupCount=`ls -1 -t $BackupPath/$Alias | grep ^20 | wc -l`
               echo $BackupPath/$Alias" осталось старых бэкапов - "$OldBackupCount", а нам можно оставить "$MinOldBackupCount>>$LogPrefix/StationParse.$IP 
+              #
+              # ну теперь оставим только нужное количество бэкапов
+              if [ ! -z $MaxOldBackupCount ]; then
+                 while [ $OldBackupCount -gt $MaxOldBackupCount ]; do
+                       OlderDir=`ls -1 -t $BackupPath/$Alias | grep ^20 | tail -1`
+                       echo 'Эээээй, нужно удалить старый бакап '$BackupPath/$Alias/$OlderDir >>$LogPrefix/StationParse.$IP
+                       rm -r $BackupPath/$Alias/$OlderDir
+                       OldBackupCount=`ls -1 -t $BackupPath/$Alias | grep ^20 | wc -l`
+                 done
+              fi
               #
               if [ ! -z $MinFreeSpace ]; then
                  # наконец проверим свободное место и если его мало - пошлем письмо и удалим старые бакапы
