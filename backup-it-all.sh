@@ -85,7 +85,7 @@ if [ ! -d $BackupPath ]; then
    exit
 fi
 
-[ $NoSummary -eq 1 ] && echo NoSummary flag is on. Ok then >>$log
+[[ $NoSummary -eq 1 ]] && echo NoSummary flag is on. Ok then >>$log
 ####################################################################################
 IncrementDir=`date +%Y-%m-%d`
 Current=files
@@ -94,10 +94,10 @@ Current=files
 # все на месте ? тогда поехали
 
 #вычислим размер папки с архивами ДО архивирования
-[ ! $NoSummary -eq 1 ] && StartSize=`du $BackupPath -s -b|cut -d/ -f1`
+[[ ! $NoSummary -eq 1 ]] && StartSize=`du $BackupPath -s -b|cut -d/ -f1`
 StartSizeF=$(printf "%'.0d" $StartSize)
 #свободное место ДО архивирования
-[ ! $NoSummary -eq 1 ] && StartFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
+[[ ! $NoSummary -eq 1 ]] && StartFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
 StartFreeF=$(printf "%'.0d" $StartFree)
 
 echo So, lets do it now                                                                                                                                                                            >$log
@@ -232,8 +232,8 @@ do
                mount "//$IP/$ShareName" "$MountPath/$Alias/$Share_Name" -o user=$User,password=$Password,iocharset=utf8,ro >>$LogPrefix/StationParse.$IP 2>&1
                Code=$?
                echo Код монтирования $Code >>$LogPrefix/StationParse.$IP
-               [ ! $NoSummary -eq 1 ] && MountSize=$(du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1)
-               [ ! $NoSummary -eq 1 ] && BackupSize=$(du $BackupPath/$Alias/$Current/$Share_Name -s -b|cut -d/ -f1)
+               [[ ! $NoSummary -eq 1 ]] && MountSize=$(du $MountPath/$Alias/$Share_Name -s -b|cut -d/ -f1)
+               [[ ! $NoSummary -eq 1 ]] && BackupSize=$(du $BackupPath/$Alias/$Current/$Share_Name -s -b|cut -d/ -f1)
                if [[ $Code -eq 0 ]];  then
                   ShareLive=$((ShareLive+1))
                   ShareNames[$ShareLive]=${Share_Name:0:-$Width1}
@@ -282,7 +282,7 @@ do
               # 
               # измерим размер папочки с имеющимся архивом (без учета бэкапов) до начала архивации. ХЗ зачем.
               if [ -d $BackupPath/$Alias/$Current ]; then
-                 [ ! $NoSummary -eq 1 ] && hostStartSize=$(du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1) 
+                 [[ ! $NoSummary -eq 1 ]] && hostStartSize=$(du $BackupPath/$Alias/$Current -s -b|cut -d/ -f1) 
                  hostStartSizeF=$(printf "%'.0d" $hostStartSize)
               fi
               ########## http://wiki.dieg.info/rsync
@@ -384,8 +384,8 @@ do
                   # если он конечно есть
                   echo LastBackup is $LastBackup/$LastBackupCnt >>$LogPrefix/StationParse.$IP                 
                   if [ ! -e $BackupPath/$Alias/$LastBackup/$Alias-$LastBackup.7z ]; then 
-                     Is7Z=`which  p7zip | wc -l`
-                     if [ $Is7Z -eq 0 ]; then
+                     Is7Z=`apt-cache search p7zip | wc -l`
+                     if [[ $Is7Z -eq 0 ]]; then
                         apt-get install p7zip-full -y
                      fi
                      StartTime=$(date +%s)
@@ -488,12 +488,12 @@ StopTimeF=$(date +"%d-%m-%y %T")
 Time=$((StopTime-StartTime))
 TimeF=$(printf "%'.0d" $Time)
 #
-[ ! $NoSummary -eq 1 ] && StopSize=`du $BackupPath -s -b|cut -d/ -f1`
+[[ ! $NoSummary -eq 1 ]] && StopSize=`du $BackupPath -s -b|cut -d/ -f1`
 StopSizeF=$(printf "%'.0d" $StopSize)
 Size=$((StopSize-StartSize))
 SizeF=$(printf "%'.0d" $Size)
 #свободное место ПОСЛЕ архивирования
-[ ! $NoSummary -eq 1 ] && StopFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
+[[ ! $NoSummary -eq 1 ]] && StopFree=`df $BackupPath --block-size=1 |tail -n 1 |tr -s "\t " ":" |cut -f4 -d ":"` 
 StopFreeF=$(printf "%'.0d" $StopFree)
 #
 Col2=$HostLive'/'$HostCount
