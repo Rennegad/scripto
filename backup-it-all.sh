@@ -140,7 +140,7 @@ do
      else
         echo Отлично, дальше работаем с хостом $NetbiosName, [$IP], [$MAC] >>$LogPrefix/StationParse.$IP
         # запишем хост в список хостов, на долгую память
-        if [[    $(grep -c -i ^$MAC TotalHostList.tbk ) -eq 0 ]]; then
+        if [[    $(grep -c -i ^$MAC$ TotalHostList.tbk ) -eq 0 ]]; then
            echo $MAC $IP"${Spac:0:13-${#IP}}" $NetbiosName $(date +"%d-%m-%y %T")  >>TotalHostList.tbk
         fi
         # вычислим алиас станции. если он есть
@@ -174,28 +174,28 @@ do
         # Проверим, не в черном ли списке станция
         # черный список - все станции, кроме этих
         if [ -f pc-exclude.tbk ]; then
-           if [[ $(grep -c -w  ^$IP          pc-exclude.tbk) -ne 0 || \
-                 $(grep -c -i  ^$MAC         pc-exclude.tbk) -ne 0 || \
-                 $(grep -c -i  ^$NetbiosName' ' pc-exclude.tbk) -ne 0 || \
-                 $(grep -c -i  ^$Alias' '       pc-exclude.tbk) -ne 0 ]]; then
-              echo ОПА! IP-[$IP:$(grep -c -w ^$IP pc-exclude.tbk)] \
-                        MAC-[$MAC:$(grep -c -i ^$MAC pc-exclude.tbk)] \
-                        Netbios-[$NetbiosName:$(grep -c -i ^$NetbiosName' ' pc-exclude.tbk)] \
-                        Alias-[$Alias:$(grep -c -i ^$Alias' ' pc-exclude.tbk)] в черном списке! Проходим мимо этого хоста.... >>$LogPrefix/StationParse.$IP
+           if [[ $(grep -c -w  ^$IP$          pc-exclude.tbk) -ne 0 || \
+                 $(grep -c -i  ^$MAC$         pc-exclude.tbk) -ne 0 || \
+                 $(grep -c -i  ^$NetbiosName$ pc-exclude.tbk) -ne 0 || \
+                 $(grep -c -i  ^$Alias$       pc-exclude.tbk) -ne 0 ]]; then
+              echo ОПА! IP-[$IP:$(grep -c -w ^$IP$ pc-exclude.tbk)] \
+                        MAC-[$MAC:$(grep -c -i ^$MAC$ pc-exclude.tbk)] \
+                        Netbios-[$NetbiosName:$(grep -c -i ^$NetbiosName$ pc-exclude.tbk)] \
+                        Alias-[$Alias:$(grep -c -i ^$Alias$ pc-exclude.tbk)] в черном списке! Проходим мимо этого хоста.... >>$LogPrefix/StationParse.$IP
               Alias=''
            fi
         fi                      
         # На всякий случай проверим, в белом ли списке станция
         # белый список - только станции из этого списка
         if [ -f pc-include.tbk ]; then
-           if [[ $(grep -c -w ^$IP          pc-include.tbk) -ne 0 ||\
-                 $(grep -c -i ^$MAC         pc-include.tbk) -ne 0 ||\
-                 $(grep -c -i ^$NetbiosName' ' pc-include.tbk) -ne 0 ||\
-                 $(grep -c -i ^$Alias' '       pc-include.tbk) -ne 0 ]]; then
-              echo УРА! IP-[$IP $(grep -c ^$IP pc-include.tbk)] \
-                        MAC-[$MAC $(grep -c -i ^$MAC pc-include.tbk)] \
-                        Netbios-[$NetbiosName $(grep -c -i ^$NetbiosName' ' pc-include.tbk)] \
-                        Alias-[$Alias $(grep -c -i ^$Alias' ' pc-include.tbk)] в белом списке! Это удача, работаем с этим хостом!>>$LogPrefix/StationParse.$IP
+           if [[ $(grep -c -w ^$IP$          pc-include.tbk) -ne 0 ||\
+                 $(grep -c -i ^$MAC$         pc-include.tbk) -ne 0 ||\
+                 $(grep -c -i ^$NetbiosName$ pc-include.tbk) -ne 0 ||\
+                 $(grep -c -i ^$Alias$       pc-include.tbk) -ne 0 ]]; then
+              echo УРА! IP-[$IP $(grep -c ^$IP$ pc-include.tbk)] \
+                        MAC-[$MAC $(grep -c -i ^$MAC$ pc-include.tbk)] \
+                        Netbios-[$NetbiosName $(grep -c -i ^$NetbiosName$ pc-include.tbk)] \
+                        Alias-[$Alias $(grep -c -i ^$Alias$ pc-include.tbk)] в белом списке! Это удача, работаем с этим хостом!>>$LogPrefix/StationParse.$IP
            else
               Alias=''
               echo Как же так? IP-[$IP] MAC-[$MAC] Netbios-[$NetbiosName] Alias-[$Alias] НЕ в белом списке! проходим мимо этого хоста... >>$LogPrefix/StationParse.$IP
